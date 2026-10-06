@@ -1,7 +1,10 @@
 .env
 .venv/
-results/raw/
 __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
+*.egg-info/
+results/smoke/
+# NOTE: results/raw/ é versionado de propósito: são as 3.000 predições que
+# sustentam o relatório (auditáveis sem precisar reexecutar nada).

@@ -1,9 +1,16 @@
+"""CLI do benchmark Jev vs Laya.
+
+Subcomandos: ``prepare`` (congela os casos), ``smoke`` (teste rápido),
+``run`` (executa modelos, com retomada) e ``report`` (gera relatório/gráficos).
+"""
 from __future__ import annotations
 
 import argparse
 import json
-import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
 from tqdm import tqdm
 
 from bench.clients.base import Prediction
@@ -15,7 +22,6 @@ from bench.config import (
     REPORT_PATH,
     RESULTS_DIR,
     SAMPLES_PER_TASK,
-    TASKS,
     WARMUP_RUNS,
 )
 from bench.report import generate_report
@@ -32,7 +38,7 @@ from bench.tasks import (
 
 def load_manifest(path: Path = MANIFEST_PATH) -> list[Case]:
     if not path.exists():
-        raise FileNotFoundError(f"Manifest {path} not found. Run 'jl-bench prepare' first.")
+        raise FileNotFoundError(f"Manifest {path} not found. Run 'python -m bench.cli prepare' first.")
     cases = []
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
@@ -79,7 +85,7 @@ def cmd_smoke(args):
     results_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Jev
-    print("\n--- Testing Jev via Vercel AI Gateway ---")
+    print("\n--- Testing Jev via OpenRouter Decisions API ---")
     try:
         with JevClient() as jev:
             for c in cases:
@@ -113,58 +119,71 @@ def cmd_smoke(args):
         print(f"Laya Tuned initialization failed: {e}")
 
 
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
-
 def run_model_on_cases(
     model_name: str, client, cases: list[Case], concurrency: int = 1
 ) -> list[Prediction]:
+    """Executa ``client`` sobre ``cases`` gravando incrementalmente em ``results/raw/<model>.jsonl``.
+
+    Retomável: casos já concluídos com sucesso são mantidos. Casos que falharam
+    (``ok=False``, ex.: timeout de rede) são **reexecutados**; o arquivo é reescrito
+    apenas com as predições bem-sucedidas antes de continuar, evitando duplicatas.
+    """
     RAW_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     out_file = RAW_RESULTS_DIR / f"{model_name}.jsonl"
 
-    existing_preds: dict[str, Prediction] = {}
+    valid_ids = {c.case_id for c in cases}
+    done: dict[str, Prediction] = {}
+    n_failed = 0
     if out_file.exists():
         with open(out_file, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
-                if line:
-                    data = json.loads(line)
-                    existing_preds[data["case_id"]] = Prediction(**data)
+                if not line:
+                    continue
+                pred = Prediction(**json.loads(line))
+                if pred.ok and pred.case_id in valid_ids:
+                    done[pred.case_id] = pred
+                else:
+                    n_failed += 1
+        if n_failed:
+            # Reescreve só com as bem-sucedidas; as demais serão reexecutadas abaixo.
+            with open(out_file, "w", encoding="utf-8") as f:
+                for pred in done.values():
+                    f.write(json.dumps(pred.to_dict()) + "\n")
 
-    print(f"Model {model_name}: {len(existing_preds)}/{len(cases)} already completed.")
+    print(f"Model {model_name}: {len(done)}/{len(cases)} already completed ({n_failed} failed/stale to retry).")
 
-    # Warmup
-    if cases:
-        print(f"Performing {WARMUP_RUNS} warmup runs...")
-        for _ in range(WARMUP_RUNS):
-            client.predict(cases[0])
-
-    preds: list[Prediction] = list(existing_preds.values())
-    pending_cases = [c for c in cases if c.case_id not in existing_preds]
-
+    preds: list[Prediction] = list(done.values())
+    pending_cases = [c for c in cases if c.case_id not in done]
     if not pending_cases:
         return preds
 
-    file_lock = threading.Lock()
+    # Aquecimento (só quando há trabalho pendente): descarta efeitos de cold start.
+    print(f"Performing {WARMUP_RUNS} warmup runs...")
+    for _ in range(WARMUP_RUNS):
+        client.predict(pending_cases[0])
 
-    if concurrency > 1:
-        with open(out_file, "a", encoding="utf-8") as f:
+    file_lock = threading.Lock()
+    with open(out_file, "a", encoding="utf-8") as f:
+        if concurrency > 1:
             with ThreadPoolExecutor(max_workers=concurrency) as executor:
-                future_to_case = {executor.submit(client.predict, c): c for c in pending_cases}
-                for future in tqdm(as_completed(future_to_case), total=len(pending_cases), desc=f"Running {model_name} (x{concurrency})"):
+                futures = [executor.submit(client.predict, c) for c in pending_cases]
+                for future in tqdm(as_completed(futures), total=len(futures), desc=f"Running {model_name} (x{concurrency})"):
                     pred = future.result()
                     with file_lock:
                         preds.append(pred)
                         f.write(json.dumps(pred.to_dict()) + "\n")
                         f.flush()
-    else:
-        with open(out_file, "a", encoding="utf-8") as f:
+        else:
             for c in tqdm(pending_cases, desc=f"Running {model_name}"):
                 pred = client.predict(c)
                 preds.append(pred)
                 f.write(json.dumps(pred.to_dict()) + "\n")
                 f.flush()
 
+    n_err = sum(1 for p in preds if not p.ok)
+    if n_err:
+        print(f"WARNING: {n_err} predictions failed for {model_name}. Re-run the same command to retry only those.")
     return preds
 
 
@@ -179,7 +198,7 @@ def cmd_run(args):
 
         if model_name == "jev":
             with JevClient() as client:
-                concurrency = getattr(args, "concurrency", 5) or 5
+                concurrency = max(1, args.concurrency)
                 run_model_on_cases("jev", client, cases, concurrency=concurrency)
         elif model_name == "laya":
             client = LayaClient(tuned=False)
@@ -206,7 +225,7 @@ def cmd_report(args):
         all_predictions[model_name] = preds
 
     if not all_predictions:
-        print("No predictions found in results/raw/. Run 'jl-bench run' first.")
+        print("No predictions found in results/raw/. Run 'python -m bench.cli run' first.")
         return
 
     print(f"Generating benchmark report for models: {list(all_predictions.keys())}...")

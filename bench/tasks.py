@@ -1,6 +1,11 @@
+"""Definição dos casos do benchmark e construtores dos 5 datasets públicos.
+
+Cada ``build_*`` faz uma amostra aleatória simples (sem estratificação) e
+reprodutível (``numpy.random.default_rng(seed)``) do split indicado, e monta o
+mesmo ``state``/``questions`` que será enviado a **todos** os modelos.
+"""
 from __future__ import annotations
 
-import json
 from dataclasses import asdict, dataclass
 from typing import Any
 import numpy as np
@@ -9,6 +14,8 @@ from bench.config import SEED, SAMPLES_PER_TASK
 
 @dataclass
 class Case:
+    """Um prompt congelado: entrada (state), pergunta (questions) e gabarito (gold)."""
+
     case_id: str
     task: str
     qtype: str  # "choice" | "score" | "noul"
@@ -60,7 +67,10 @@ def build_ag_news(n_samples: int = SAMPLES_PER_TASK, seed: int = SEED) -> list[C
 
 def build_banking77(n_samples: int = SAMPLES_PER_TASK, seed: int = SEED) -> list[Case]:
     ds = load_dataset("mteb/banking77", split="test")
-    
+
+    # ATENÇÃO: neste dataset o nome da intenção está na coluna `label_text`, não em
+    # `features["label"].names`. Usar os índices como rótulos faz ambos os modelos
+    # operarem no escuro (~1,3% de acerto = 1/77). Regressão já ocorrida; ver tests/.
     # Map label integer to real label text names
     int_to_name: dict[int, str] = {}
     for item in ds:

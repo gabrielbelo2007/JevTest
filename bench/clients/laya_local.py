@@ -1,3 +1,11 @@
+"""Cliente local do Laya (``convaiinnovations/laya``) via ``laya.Router``.
+
+``tuned=False``: configuração de fábrica (agente inglês: ``head_max_len=192``).
+``tuned=True``: ``head_max_len=512`` e ``max_len=1024``, aplicados na config dos
+agentes **e** passados em cada ``predict()`` (o argumento de chamada é o que de
+fato vale; a config é só para consistência). O atributo do Router é ``_agents``
+(com underscore): usar ``agents`` retorna vazio e o ajuste não seria aplicado.
+"""
 from __future__ import annotations
 
 import time
@@ -30,7 +38,7 @@ class LayaClient:
 
         if self.tuned:
             # Tune head_max_len to 512 for high-cardinality choice questions
-            for name, agent in getattr(self.router, "agents", {}).items():
+            for name, agent in getattr(self.router, "_agents", {}).items():
                 if hasattr(agent, "cfg"):
                     agent.cfg["head_max_len"] = 512
                     agent.cfg["max_len"] = 1024
@@ -41,6 +49,7 @@ class LayaClient:
         try:
             extra_kwargs: dict[str, Any] = {}
             if self.tuned:
+                extra_kwargs["head_max_len"] = 512
                 extra_kwargs["max_len"] = 1024
             
             res = self.router.predict(case.state, case.questions, **extra_kwargs)
