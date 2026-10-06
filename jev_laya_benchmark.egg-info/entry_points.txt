@@ -1,0 +1,2 @@
+[console_scripts]
+jl-bench = bench.cli:main
