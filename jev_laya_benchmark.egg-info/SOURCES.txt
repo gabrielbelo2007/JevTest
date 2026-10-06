@@ -1,9 +1,0 @@
-pyproject.toml
-bench/__init__.py
-bench/config.py
-jev_laya_benchmark.egg-info/PKG-INFO
-jev_laya_benchmark.egg-info/SOURCES.txt
-jev_laya_benchmark.egg-info/dependency_links.txt
-jev_laya_benchmark.egg-info/entry_points.txt
-jev_laya_benchmark.egg-info/requires.txt
-jev_laya_benchmark.egg-info/top_level.txt
