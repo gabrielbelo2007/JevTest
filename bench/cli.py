@@ -16,6 +16,7 @@ from tqdm import tqdm
 from bench.clients.base import Prediction
 from bench.clients.jev import JevClient
 from bench.clients.laya_local import LayaClient
+from bench.clients.clm import CLMClient
 from bench.config import (
     MANIFEST_PATH,
     RAW_RESULTS_DIR,
@@ -79,7 +80,7 @@ def cmd_prepare(args):
 
 
 def cmd_smoke(args):
-    print("Running Smoke Test across all 3 models on 5 representative tasks...")
+    print("Running Smoke Test across all 4 models on 5 representative tasks...")
     cases = get_smoke_cases()
     results_dir = RESULTS_DIR / "smoke"
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -117,6 +118,18 @@ def cmd_smoke(args):
             print(f"[{c.task}] OK={pred.ok} Gold={c.gold} Pred={pred.pred} Latency={pred.latency_ms:.1f}ms")
     except Exception as e:
         print(f"Laya Tuned initialization failed: {e}")
+
+    # 4. CLM-8B (Stanford & NVIDIA)
+    print("\n--- Testing CLM-8B (Stanford & NVIDIA via clm-serve) ---")
+    try:
+        with CLMClient() as clm:
+            for c in cases:
+                pred = clm.predict(c)
+                print(f"[{c.task}] OK={pred.ok} Gold={c.gold} Pred={pred.pred} Latency={pred.latency_ms:.1f}ms")
+                if not pred.ok:
+                    print(f"  Info/Error: {pred.error}")
+    except Exception as e:
+        print(f"CLM-8B initialization failed: {e}")
 
 
 def run_model_on_cases(
@@ -189,7 +202,7 @@ def run_model_on_cases(
 
 def cmd_run(args):
     cases = load_manifest()
-    models_to_run = [args.model] if args.model != "all" else ["jev", "laya", "laya-tuned"]
+    models_to_run = [args.model] if args.model != "all" else ["jev", "laya", "laya-tuned", "clm"]
 
     for model_name in models_to_run:
         print(f"\n==========================================")
@@ -206,6 +219,10 @@ def cmd_run(args):
         elif model_name == "laya-tuned":
             client = LayaClient(tuned=True)
             run_model_on_cases("laya-tuned", client, cases, concurrency=1)
+        elif model_name in ("clm", "clm-8b"):
+            with CLMClient() as client:
+                concurrency = max(1, args.concurrency)
+                run_model_on_cases("clm", client, cases, concurrency=concurrency)
         else:
             raise ValueError(f"Unknown model: {model_name}")
 
@@ -247,7 +264,7 @@ def main():
     p_run = subparsers.add_parser("run", help="Run benchmark on dataset")
     p_run.add_argument(
         "--model",
-        choices=["jev", "laya", "laya-tuned", "all"],
+        choices=["jev", "laya", "laya-tuned", "clm", "all"],
         default="all",
         help="Which model to run",
     )

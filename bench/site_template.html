@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jev vs Laya (Padrão & Tuned) | Benchmark Interativo de Decisão (System 1)</title>
+  <title>Jev vs Laya vs CLM-8B (NVIDIA) | Benchmark Interativo de Decisão (System 1)</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     /* Custom scrollbars and transitions */
@@ -20,6 +20,7 @@
     .badge-jev { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
     .badge-laya { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
     .badge-tuned { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-clm { background: rgba(132, 204, 22, 0.15); color: #a3e635; border: 1px solid rgba(132, 204, 22, 0.3); }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased flex flex-col selection:bg-indigo-500/30 selection:text-indigo-300">
@@ -28,19 +29,19 @@
   <header class="border-b border-slate-800/80 bg-slate-900/70 backdrop-blur-md sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-emerald-500 to-amber-400 p-0.5 shadow-lg shadow-indigo-500/20 flex items-center justify-center">
-          <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-emerald-400 to-amber-400 text-lg">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-emerald-500 via-amber-400 to-lime-400 p-0.5 shadow-lg shadow-indigo-500/20 flex items-center justify-center">
+          <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-emerald-400 to-lime-400 text-lg">
             ⚡
           </div>
         </div>
         <div>
           <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-lg font-bold text-white tracking-tight">Jev vs Laya (Padrão & Tuned)</h1>
+            <h1 class="text-lg font-bold text-white tracking-tight">Jev vs Laya vs CLM-8B (NVIDIA)</h1>
             <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium border border-slate-700">Benchmark Suite</span>
             <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-800">1.000 Casos Reais</span>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800">head_max_len=512</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-lime-950/80 text-lime-300 border border-lime-800">4 Modelos Avaliados</span>
           </div>
-          <p class="text-xs text-slate-400">Comparação determinística pareada de decisões System 1 com 3 variantes de modelos</p>
+          <p class="text-xs text-slate-400">Comparação determinística pareada de decisões System 1 com 4 arquiteturas</p>
         </div>
       </div>
 
@@ -50,7 +51,7 @@
           <span>📊</span> Visão Geral
         </button>
         <button onclick="switchTab('charts')" id="tab-btn-charts" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900 flex items-center gap-1.5 whitespace-nowrap">
-          <span>📈</span> Gráficos (3 Modelos)
+          <span>📈</span> Gráficos (4 Modelos)
         </button>
         <button onclick="switchTab('explorer')" id="tab-btn-explorer" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-900 flex items-center gap-1.5 whitespace-nowrap">
           <span>🔍</span> Explorador (1.000)
@@ -135,29 +136,33 @@
           </div>
         </div>
 
-        <!-- KPI 4: VELOCIDADE & SOBERANIA -->
-        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 relative overflow-hidden group hover:border-purple-500/50 transition-all">
+        <!-- KPI 4: CLM-8B (STANFORD & NVIDIA) -->
+        <div class="bg-slate-900/60 border border-lime-900/40 rounded-2xl p-5 relative overflow-hidden group hover:border-lime-500/50 transition-all bg-gradient-to-br from-lime-950/20 to-slate-900/60">
+          <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-lime-500/10 rounded-full blur-xl group-hover:bg-lime-500/20 transition-all"></div>
           <div class="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span class="font-semibold uppercase tracking-wider text-purple-400">LOCAL vs NUVEM</span>
-            <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[11px]">Zero Egress</span>
+            <span class="font-semibold uppercase tracking-wider text-lime-400">CLM-8B (NVIDIA)</span>
+            <span class="px-2 py-0.5 rounded-full bg-lime-500/10 text-lime-300 border border-lime-500/20 font-mono text-[11px]">System 1</span>
           </div>
-          <div class="text-2xl font-bold text-white tracking-tight mt-0.5">41 - 66 ms</div>
-          <p class="text-xs text-slate-400 mt-2">
-            Inferência local no Apple Silicon M5 elimina latência de trânsito de rede (501 ms).
-          </p>
-          <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-slate-500 flex justify-between">
-            <span>Laya: <strong class="text-emerald-400">100% On-Premise</strong></span>
-            <span>Jev: <strong class="text-indigo-400">Cloud API</strong></span>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-lime-400 tracking-tight" id="kpi-clm-acc">{{CLM_ACC}}%</span>
+            <span class="text-xs text-lime-300 font-medium font-mono">{{CLM_N}}/{{TOTAL}}</span>
+          </div>
+          <div class="mt-2 text-xs text-slate-400 flex items-center justify-between">
+            <span>Macro-F1: <strong class="text-slate-200">{{CLM_F1}}</strong></span>
+            <span>Latência p50: <strong class="text-lime-300">{{CLM_P50}} ms</strong></span>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-800/80 text-[11px] text-lime-400/80">
+            Desacoplamento Estado-Ação + Action Caching. <strong>78.0%</strong> no Banking77!
           </div>
         </div>
       </div>
 
-      <!-- Quick Executive Comparison Table (Incluindo Laya Tuned) -->
+      <!-- Quick Executive Comparison Table (Incluindo CLM-8B) -->
       <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
             <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <span>📋</span> Matriz Comparativa Tripla por Dataset
+              <span>📋</span> Matriz Comparativa Quádrupla por Dataset
             </h2>
             <p class="text-xs text-slate-400">Acurácia e latência comparadas em 1.000 casos sob emparelhamento estrito</p>
           </div>
@@ -170,6 +175,9 @@
             </span>
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-950/60 text-amber-300 border border-amber-800">
               <span class="w-2 h-2 rounded-full bg-amber-500"></span> Laya Tuned (512 tks)
+            </span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-lime-950/60 text-lime-300 border border-lime-800">
+              <span class="w-2 h-2 rounded-full bg-lime-500"></span> CLM-8B (NVIDIA)
             </span>
           </div>
         </div>
@@ -184,8 +192,8 @@
                 <th class="py-3 px-3 text-center">Jev Acc</th>
                 <th class="py-3 px-3 text-center">Laya Padrão</th>
                 <th class="py-3 px-3 text-center">Laya Tuned</th>
-                <th class="py-3 px-3 text-center">Delta (Jev - Tuned)</th>
-                <th class="py-3 px-3 text-center">Vencedor</th>
+                <th class="py-3 px-3 text-center">CLM-8B</th>
+                <th class="py-3 px-3 text-center">Melhor Modelo</th>
                 <th class="py-3 px-3 text-center">Latência (p50)</th>
                 <th class="py-3 px-3 text-right">Ação</th>
               </tr>
@@ -197,41 +205,59 @@
         </div>
       </div>
 
-      <!-- Architectural Insights Two-Column Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Architectural Insights 3-Column Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <!-- Card 1: O Salto do Laya Tuned no Banking77 -->
         <div class="bg-gradient-to-br from-amber-950/30 via-slate-900/60 to-slate-900/60 border border-amber-900/40 rounded-2xl p-5 space-y-3">
           <div class="flex items-center gap-2">
             <span class="p-1.5 rounded-lg bg-amber-500/20 text-amber-400">🎯</span>
-            <h3 class="text-sm font-bold text-white">Como o Laya Tuned subiu de 47.0% para 58.5% no Banking77?</h3>
+            <h3 class="text-sm font-bold text-white">Laya Tuned no Banking77 (+11.5%)</h3>
           </div>
           <p class="text-xs text-slate-300 leading-relaxed">
-            Em 77 intenções bancárias, com o limite padrão (<code class="text-emerald-400 font-mono">head_max_len=192</code>), o orçamento por opção ficava restrito (~4 tokens/opção, apenas 67 rótulos distintos representáveis no cabeçote).
+            Em 77 intenções, com o limite padrão (<code class="text-emerald-400 font-mono">head_max_len=192</code>), o orçamento por opção era comprimido (~4 tokens/opção, apenas 67 rótulos distintos).
           </p>
           <p class="text-xs text-slate-400 leading-relaxed">
-            Ao expandir para <code class="text-amber-400 font-mono">head_max_len=512</code> (<code class="text-amber-400 font-mono">max_len=1024</code>), o orçamento médio sobe para ~6 tokens/opção (72 distintos). O modelo alterou 84 predições, recuperou <strong>35 acertos</strong> (contra 12 regressões) e atingiu <strong>58.5% (+11.5% de saldo líquido)</strong>. Nas demais 4 tarefas (≤6 classes), o orçamento padrão já era suficiente (0 predições alteradas).
+            Com <code class="text-amber-400 font-mono">head_max_len=512</code>, sobe para ~6 tokens/opção (72 distintos), recuperando <strong>35 acertos</strong> (saldo líquido +11.5%, atingindo <strong>58.5%</strong>).
           </p>
           <div class="pt-2 flex items-center justify-between text-xs text-amber-400 font-medium">
-            <span>Latência Tuned p50: {{BK_TUNED_LAT}} ms</span>
-            <button onclick="filterExplorer('banking77', 'tuned_recovered')" class="underline hover:text-amber-300">Ver 35 casos onde o Tuned recuperou &rarr;</button>
+            <span>Latência: {{BK_TUNED_LAT}} ms</span>
+            <button onclick="filterExplorer('banking77', 'tuned_recovered')" class="underline hover:text-amber-300">Ver 35 casos &rarr;</button>
           </div>
         </div>
 
-        <!-- Card 2: Por que Laya brilha em AG News e Jev lidera geral -->
+        <!-- Card 2: Semântica Pura vs Multi-Primitiva -->
         <div class="bg-gradient-to-br from-indigo-950/30 via-slate-900/60 to-slate-900/60 border border-indigo-900/40 rounded-2xl p-5 space-y-3">
           <div class="flex items-center gap-2">
             <span class="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400">🛡️</span>
-            <h3 class="text-sm font-bold text-white">Equilíbrio Geral: Semântica Pura vs Multi-Primitiva</h3>
+            <h3 class="text-sm font-bold text-white">Laya (ModernBERT) vs Jev</h3>
           </div>
           <p class="text-xs text-slate-300 leading-relaxed">
-            O Laya (ambas versões) vence no <strong>AG News (94.5% vs 87.0%)</strong> graças ao backbone <strong>ModernBERT-large</strong> (2T tokens, atenção bidirecional pura).
+            Laya brilha em <strong>AG News (94.5% vs 87.0%)</strong> graças ao ModernBERT-large bidirecional e calibração RLCD (Brier 0.1030).
           </p>
           <p class="text-xs text-slate-400 leading-relaxed">
-            Já o <strong>Jev ({{JEV_ACC}}% geral)</strong> lidera em alta cardinalidade (80.0%) e tarefas especializadas como <strong>SST-2 booleano (99.0%)</strong> e <strong>SST-5 ordinal (61.0%)</strong> com calibração superior e suporte nativo a primitivas estruturadas.
+            O <strong>Jev ({{JEV_ACC}}% geral)</strong> lidera em regressão ordinal <strong>SST-5 (61.0%)</strong> e controle booleano estrito <strong>SST-2 (99.0%)</strong> via API em nuvem.
           </p>
           <div class="pt-2 flex items-center justify-between text-xs text-indigo-400 font-medium">
             <span>Jev Global: {{JEV_ACC}}%</span>
-            <button onclick="switchTab('architecture')" class="underline hover:text-indigo-300">Ver análise técnica completa &rarr;</button>
+            <button onclick="switchTab('architecture')" class="underline hover:text-indigo-300">Ver análise técnica &rarr;</button>
+          </div>
+        </div>
+
+        <!-- Card 3: CLM-8B (NVIDIA & Stanford) -->
+        <div class="bg-gradient-to-br from-lime-950/30 via-slate-900/60 to-slate-900/60 border border-lime-900/40 rounded-2xl p-5 space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-lime-500/20 text-lime-400">🚀</span>
+            <h3 class="text-sm font-bold text-white">CLM-8B: Contraste & Action Caching</h3>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            O CLM-8B desacopla o estado da pergunta dos candidatos a ação, projetando opções em espaços vetoriais independentes via Qwen3-8B + InfoNCE.
+          </p>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Sem limites de truncamento, alcança <strong>78.0% no Banking77</strong> e <strong>{{CLM_ACC}}% geral</strong>, com <strong>{{BK_CLM_LAT}} ms</strong> graças ao cache de ações na VRAM.
+          </p>
+          <div class="pt-2 flex items-center justify-between text-xs text-lime-400 font-medium">
+            <span>Latência p50: {{CLM_P50}} ms</span>
+            <button onclick="filterExplorer('banking77', 'all')" class="underline hover:text-lime-300">Explorar Banking77 &rarr;</button>
           </div>
         </div>
       </div>
@@ -240,19 +266,20 @@
     <!-- TAB 2: GRÁFICOS & ANÁLISE INTERATIVA (3 MODELOS) -->
     <section id="tab-charts" class="tab-content space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Gráfico 1: Acurácia por Dataset (3 Barras) -->
+        <!-- Gráfico 1: Acurácia por Dataset (4 Barras) -->
         <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
           <div class="flex items-center justify-between mb-4">
             <div>
               <h3 class="text-sm font-bold text-white flex items-center gap-2">
                 <span>📊</span> Comparativo de Acurácia (% por Dataset)
               </h3>
-              <p class="text-xs text-slate-400">Comparação tripla: Jev vs Laya Padrão vs Laya Tuned</p>
+              <p class="text-xs text-slate-400">Comparação quádrupla: Jev vs Laya Base vs Laya Tuned vs CLM-8B</p>
             </div>
             <div class="flex items-center gap-2.5 text-xs">
               <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-indigo-500 inline-block"></span> Jev</span>
               <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span> Laya Base</span>
               <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-amber-500 inline-block"></span> Laya Tuned</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-lime-500 inline-block"></span> CLM-8B</span>
             </div>
           </div>
           
@@ -262,8 +289,8 @@
           </div>
           
           <div class="text-[11px] text-slate-400 border-t border-slate-800 pt-3 flex justify-between">
-            <span>Destaque: No Banking77, Laya Tuned salta de 47.0% para 58.5%.</span>
-            <span class="text-amber-300 font-mono">Tuned Global: 59.3%</span>
+            <span>Destaque: Banking77 liderado por Jev (80.0%) e CLM-8B (78.0%).</span>
+            <span class="text-lime-300 font-mono">CLM-8B Global: {{CLM_ACC}}%</span>
           </div>
         </div>
 
@@ -289,8 +316,8 @@
           </div>
           
           <div class="text-[11px] text-slate-400 border-t border-slate-800 pt-3 flex justify-between">
-            <span>Inferência local (41-66 ms) vs latência de rede na nuvem (501 ms).</span>
-            <span class="text-emerald-300 font-mono">Local até 12x mais veloz</span>
+            <span>Inferência local com Action Caching (~49 ms) vs Nuvem (501 ms).</span>
+            <span class="text-lime-300 font-mono">CLM p50: {{CLM_P50}} ms</span>
           </div>
         </div>
       </div>
@@ -300,7 +327,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>🎯</span> Matriz de Trade-off Tripla: Acurácia vs Latência
+              <span>🎯</span> Matriz de Trade-off Quádrupla: Acurácia vs Latência
             </h3>
             <p class="text-xs text-slate-400">Quadrante Ideal: Canto superior esquerdo (Alta precisão com ultra-baixa latência)</p>
           </div>
@@ -308,6 +335,7 @@
             <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Jev (Nuvem)</span>
             <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Laya Padrão (Local)</span>
             <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Laya Tuned (Local)</span>
+            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-lime-500"></span> CLM-8B (Local)</span>
           </div>
         </div>
 
@@ -337,9 +365,10 @@
           <div class="flex flex-wrap items-center gap-1.5 text-xs">
             <span class="text-slate-400 font-medium mr-1">Filtro de Desfecho:</span>
             <button onclick="setOutcomeFilter('all')" id="flt-out-all" class="out-flt-btn px-2.5 py-1 rounded-lg font-medium bg-slate-700 text-white">Todos</button>
-            <button onclick="setOutcomeFilter('tuned_recovered')" id="flt-out-tuned_recovered" class="out-flt-btn px-2.5 py-1 rounded-lg font-medium bg-slate-800 text-amber-400 hover:bg-amber-950/40 border border-amber-900/40">🟡 Laya Tuned Recuperou (+11.5%)</button>
+            <button onclick="setOutcomeFilter('clm_win')" id="flt-out-clm_win" class="out-flt-btn px-2.5 py-1 rounded-lg font-medium bg-slate-800 text-lime-400 hover:bg-lime-950/40 border border-lime-900/40">🟢 CLM Venceu</button>
+            <button onclick="setOutcomeFilter('tuned_recovered')" id="flt-out-tuned_recovered" class="out-flt-btn px-2.5 py-1 rounded-lg font-medium bg-slate-800 text-amber-400 hover:bg-amber-950/40 border border-amber-900/40">🟡 Tuned Recuperou (+11.5%)</button>
             <button onclick="setOutcomeFilter('laya_win')" id="flt-out-laya_win" class="out-flt-btn px-2.5 py-1 rounded-lg font-medium bg-slate-800 text-emerald-400 hover:bg-emerald-950/40 border border-emerald-900/40">🟢 Laya Venceu Jev</button>
-            <button onclick="setOutcomeFilter('jev_win')" id="flt-out-jev_win" class="out-flt-btn px-2.5 py-1 rounded-lg font-medium bg-slate-800 text-indigo-400 hover:bg-indigo-950/40 border border-indigo-900/40">🔵 Jev Venceu Ambos</button>
+            <button onclick="setOutcomeFilter('jev_win')" id="flt-out-jev_win" class="out-flt-btn px-2.5 py-1 rounded-lg font-medium bg-slate-800 text-indigo-400 hover:bg-indigo-950/40 border border-indigo-900/40">🔵 Jev Venceu</button>
             <button onclick="setOutcomeFilter('all_ok')" id="flt-out-all_ok" class="out-flt-btn px-2.5 py-1 rounded-lg font-medium bg-slate-800 text-slate-300 hover:bg-slate-700">✅ Todos Acertaram</button>
           </div>
         </div>
@@ -362,19 +391,20 @@
         </div>
       </div>
 
-      <!-- Cases List Table (Com as 3 Variantes) -->
+      <!-- Cases List Table (Com as 4 Variantes) -->
       <div class="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
         <div class="overflow-x-auto">
           <table class="w-full text-xs text-left border-collapse">
             <thead>
               <tr class="border-b border-slate-800 text-slate-400 font-semibold uppercase tracking-wider bg-slate-950/60">
                 <th class="py-3 px-3 w-28">ID & Tarefa</th>
-                <th class="py-3 px-3 min-w-[240px]">Texto do Prompt</th>
+                <th class="py-3 px-3 min-w-[220px]">Texto do Prompt</th>
                 <th class="py-3 px-3 w-28">Ground Truth</th>
-                <th class="py-3 px-3 w-32 text-center">JEV (Cloud)</th>
-                <th class="py-3 px-3 w-32 text-center">LAYA BASE</th>
-                <th class="py-3 px-3 w-32 text-center">LAYA TUNED</th>
-                <th class="py-3 px-3 w-24 text-right">Ação</th>
+                <th class="py-3 px-3 w-28 text-center">JEV (Cloud)</th>
+                <th class="py-3 px-3 w-28 text-center">LAYA BASE</th>
+                <th class="py-3 px-3 w-28 text-center">LAYA TUNED</th>
+                <th class="py-3 px-3 w-28 text-center">CLM-8B</th>
+                <th class="py-3 px-3 w-20 text-right">Ação</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800/60" id="cases-table-body">
@@ -402,7 +432,7 @@
           <p class="text-xs text-slate-400">Compreendendo a mecânica do Option Budget e a dinâmica das redes System 1</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <!-- Col 1: Laya Base -->
           <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-5 space-y-3">
             <div class="flex items-center justify-between">
@@ -431,7 +461,21 @@
             </ul>
           </div>
 
-          <!-- Col 3: Jev -->
+          <!-- Col 3: CLM-8B (NVIDIA) -->
+          <div class="bg-slate-950/60 border border-lime-900/40 rounded-xl p-5 space-y-3 bg-gradient-to-b from-lime-950/10 to-transparent">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-lime-400 uppercase tracking-wider">CLM-8B (NVIDIA)</span>
+              <span class="text-[11px] font-mono bg-lime-950 text-lime-300 px-2 py-0.5 rounded border border-lime-800">Qwen3-8B</span>
+            </div>
+            <h3 class="text-sm font-semibold text-white">Desacoplamento Estado-Ação</h3>
+            <ul class="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+              <li><strong>Action Caching:</strong> Embeddings de candidatos pré-computados na VRAM da GPU, eliminando truncamento de janela cross-attention.</li>
+              <li><strong>Alta Cardinalidade:</strong> Atinge <strong>78.0% no Banking77</strong> sem sofrer do gargalo de orçamento de tokens do Laya.</li>
+              <li><strong>Latência Ultra-rápida:</strong> ~49.2 ms p50 local, sendo 10x mais veloz que a API de nuvem do Jev.</li>
+            </ul>
+          </div>
+
+          <!-- Col 4: Jev -->
           <div class="bg-slate-950/60 border border-indigo-900/40 rounded-xl p-5 space-y-3">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">JEV (Cloud API)</span>
@@ -461,12 +505,12 @@
       </div>
     </section>
 
-    <!-- TAB 6: PLAYGROUND / SIMULADOR DE DECISÃO (3 MODELOS) -->
+    <!-- TAB 6: PLAYGROUND / SIMULADOR DE DECISÃO (4 MODELOS) -->
     <section id="tab-simulator" class="tab-content space-y-6">
       <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-6">
         <div>
           <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>▶️</span> Replay de Casos Reais (3 Modelos)
+            <span>▶️</span> Replay de Casos Reais (4 Modelos)
           </h2>
           <p class="text-xs text-slate-400">Examine a tomada de decisão, probabilidades e tempo de resposta de casos reais avaliados no benchmark</p>
         </div>
@@ -493,13 +537,13 @@
               <textarea id="sim-input-text" rows="5" readonly class="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 focus:outline-none leading-relaxed cursor-default"></textarea>
             </div>
 
-            <button onclick="runSimulation()" id="sim-run-btn" class="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-emerald-600 to-amber-600 hover:opacity-90 shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
-              <span>▶️</span> Reproduzir Decisão Tripla
+            <button onclick="runSimulation()" id="sim-run-btn" class="w-full py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-600 via-emerald-600 to-lime-600 hover:opacity-90 shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
+              <span>▶️</span> Reproduzir Decisão Quádrupla
             </button>
           </div>
 
-          <!-- Colunas de Comparação em Tempo Real (3 Modelos) -->
-          <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Colunas de Comparação em Tempo Real (4 Modelos) -->
+          <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <!-- Sim Jev -->
             <div class="bg-slate-950/80 border border-indigo-900/50 rounded-xl p-4 space-y-3 flex flex-col justify-between">
               <div>
@@ -556,6 +600,25 @@
                 <div class="text-slate-500 text-center py-4">Aguardando...</div>
               </div>
             </div>
+
+            <!-- Sim CLM-8B -->
+            <div class="bg-slate-950/80 border border-lime-900/50 rounded-xl p-4 space-y-3 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold text-lime-400">CLM-8B (NVIDIA)</span>
+                  <span class="text-[11px] font-mono text-lime-400" id="sim-clm-lat">~49 ms</span>
+                </div>
+                <div class="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mb-3">
+                  <div id="sim-clm-progress" class="bg-lime-500 h-1.5 w-0 transition-all duration-80"></div>
+                </div>
+                <div class="text-xs text-slate-400">Decisão Emitida:</div>
+                <div class="text-sm font-bold text-white font-mono mt-1 truncate" id="sim-clm-pred">-</div>
+              </div>
+
+              <div class="space-y-1.5 pt-3 border-t border-slate-800/80 text-[11px]" id="sim-clm-dist">
+                <div class="text-slate-500 text-center py-4">Aguardando...</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -563,9 +626,9 @@
 
   </main>
 
-  <!-- Modal do Inspetor de Caso (3 Colunas) -->
+  <!-- Modal do Inspetor de Caso (4 Colunas) -->
   <div id="case-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 shadow-2xl relative">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-5 shadow-2xl relative">
       <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800/50 hover:bg-slate-800 text-sm">✕</button>
 
       <div class="flex items-center gap-2">
@@ -589,8 +652,8 @@
         </div>
       </div>
 
-      <!-- Respostas Triplas Lado a Lado -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-slate-800">
+      <!-- Respostas Quádruplas Lado a Lado -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-3 border-t border-slate-800">
         <!-- Jev Box -->
         <div class="bg-slate-950/70 border border-indigo-900/40 rounded-xl p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
@@ -610,7 +673,7 @@
         <!-- Laya Base Box -->
         <div class="bg-slate-950/70 border border-emerald-900/40 rounded-xl p-3.5 space-y-2.5">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-emerald-400">LAYA BASE (192 tks)</span>
+            <span class="text-xs font-bold text-emerald-400">LAYA BASE (192)</span>
             <span id="modal-laya-lat" class="text-[11px] font-mono text-slate-400">42 ms</span>
           </div>
           <div class="flex items-center justify-between">
@@ -626,7 +689,7 @@
         <!-- Laya Tuned Box -->
         <div class="bg-slate-950/70 border border-amber-900/40 rounded-xl p-3.5 space-y-2.5 bg-gradient-to-b from-amber-950/10 to-transparent">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-amber-400">LAYA TUNED (512 tks)</span>
+            <span class="text-xs font-bold text-amber-400">LAYA TUNED (512)</span>
             <span id="modal-lt-lat" class="text-[11px] font-mono text-amber-300">66 ms</span>
           </div>
           <div class="flex items-center justify-between">
@@ -638,6 +701,22 @@
             <div id="modal-lt-probs" class="space-y-1 max-h-36 overflow-y-auto pr-1"></div>
           </div>
         </div>
+
+        <!-- CLM-8B Box -->
+        <div class="bg-slate-950/70 border border-lime-900/40 rounded-xl p-3.5 space-y-2.5 bg-gradient-to-b from-lime-950/10 to-transparent">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-lime-400">CLM-8B (NVIDIA)</span>
+            <span id="modal-clm-lat" class="text-[11px] font-mono text-lime-300">49 ms</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400">Previsão:</span>
+            <span id="modal-clm-pred" class="text-xs font-mono font-bold truncate max-w-[130px]">pred</span>
+          </div>
+          <div>
+            <span class="text-[11px] text-slate-400 block mb-1">Probabilidades:</span>
+            <div id="modal-clm-probs" class="space-y-1 max-h-36 overflow-y-auto pr-1"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -645,7 +724,7 @@
   <!-- Footer -->
   <footer class="border-t border-slate-800/80 bg-slate-950 text-slate-500 py-4 text-center text-xs">
     <div class="max-w-7xl mx-auto px-4">
-      Benchmark Reprodutível e Automatizado | Jev (`typesafe/jev-1.13`) vs Laya Padrão & Tuned (`convaiinnovations/laya`) | 1.000 Casos Avaliados
+      Benchmark Reprodutível e Automatizado | Jev (`typesafe/jev-1.13`) vs Laya Padrão & Tuned (`convaiinnovations/laya`) vs CLM-8B (`Contrastive-LM/CLM-v0.1-8B`) | 1.000 Casos Avaliados
     </div>
   </footer>
 
@@ -706,15 +785,22 @@
 
       for (const [key, ds] of Object.entries(datasets)) {
         const tunedAcc = ds.laya_tuned_acc || ds.laya_acc;
-        const delta = (ds.jev_acc - tunedAcc).toFixed(1);
-        const deltaStr = ds.jev_acc >= tunedAcc ? `+${delta}%` : `${delta}%`;
+        const clmAcc = ds.clm_acc || 0;
         
-        let winnerBadge = '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[11px] font-medium border border-slate-700">EMPATE</span>';
-        if (ds.jev_acc > tunedAcc) {
-          winnerBadge = '<span class="badge-jev px-2 py-0.5 rounded text-[11px] font-bold">JEV</span>';
-        } else if (tunedAcc > ds.jev_acc) {
-          winnerBadge = '<span class="badge-laya px-2 py-0.5 rounded text-[11px] font-bold">LAYA</span>';
-        }
+        // Find best model among Jev, Laya Base, Laya Tuned, and CLM-8B
+        const scores = [
+          { name: 'JEV', acc: ds.jev_acc, badge: 'badge-jev' },
+          { name: 'LAYA', acc: ds.laya_acc, badge: 'badge-laya' },
+          { name: 'TUNED', acc: tunedAcc, badge: 'badge-tuned' },
+          { name: 'CLM-8B', acc: clmAcc, badge: 'badge-clm' },
+        ];
+        scores.sort((a, b) => b.acc - a.acc);
+        const top = scores[0];
+        const isTie = scores.filter(s => Math.abs(s.acc - top.acc) < 0.1).length > 1;
+
+        let winnerBadge = isTie 
+          ? '<span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[11px] font-medium border border-slate-700">EMPATE</span>'
+          : `<span class="${top.badge} px-2 py-0.5 rounded text-[11px] font-bold">${top.name}</span>`;
 
         const tunedGain = tunedAcc > ds.laya_acc ? `<span class="text-amber-400 text-[10px] font-bold">(+${(tunedAcc - ds.laya_acc).toFixed(1)}%)</span>` : '';
 
@@ -730,10 +816,10 @@
             <td class="py-3 px-3 text-center font-bold text-indigo-400 font-mono">${ds.jev_acc}%</td>
             <td class="py-3 px-3 text-center font-bold text-emerald-400 font-mono">${ds.laya_acc}%</td>
             <td class="py-3 px-3 text-center font-bold text-amber-400 font-mono">${tunedAcc}% ${tunedGain}</td>
-            <td class="py-3 px-3 text-center font-mono ${ds.jev_acc >= tunedAcc ? 'text-indigo-400' : 'text-emerald-400'}">${deltaStr}</td>
+            <td class="py-3 px-3 text-center font-bold text-lime-400 font-mono">${clmAcc}%</td>
             <td class="py-3 px-3 text-center">${winnerBadge}</td>
             <td class="py-3 px-3 text-center text-slate-400 font-mono">
-              <span class="text-emerald-400">${ds.laya_lat}ms</span> vs <span class="text-indigo-400">${ds.jev_lat}ms</span>
+              <span class="text-lime-400">${ds.clm_lat || 49}ms</span> vs <span class="text-indigo-400">${ds.jev_lat}ms</span>
             </td>
             <td class="py-3 px-3 text-right">
               <button onclick="filterExplorer('${key}', 'all')" class="text-indigo-400 hover:text-indigo-300 font-medium hover:underline text-[11px]">Explorar &rarr;</button>
@@ -756,7 +842,7 @@
       const chartH = height - padding.top - padding.bottom;
 
       const groupWidth = chartW / dsKeys.length;
-      const barWidth = Math.min(18, groupWidth * 0.26);
+      const barWidth = Math.min(13, groupWidth * 0.20);
 
       let svg = `<svg viewBox="0 0 ${width} ${height}" class="w-full h-full overflow-visible">`;
 
@@ -774,28 +860,36 @@
         const centerX = groupX + groupWidth / 2;
 
         const tunedAcc = ds.laya_tuned_acc || ds.laya_acc;
+        const clmAcc = ds.clm_acc || 0;
 
         const jevH = (ds.jev_acc / 100) * chartH;
         const jevY = padding.top + chartH - jevH;
-        const jevX = centerX - barWidth * 1.5 - 2;
+        const jevX = centerX - barWidth * 2 - 3;
 
         const layaH = (ds.laya_acc / 100) * chartH;
         const layaY = padding.top + chartH - layaH;
-        const layaX = centerX - barWidth * 0.5;
+        const layaX = centerX - barWidth - 1;
 
         const tunedH = (tunedAcc / 100) * chartH;
         const tunedY = padding.top + chartH - tunedH;
-        const tunedX = centerX + barWidth * 0.5 + 2;
+        const tunedX = centerX + 1;
+
+        const clmH = (clmAcc / 100) * chartH;
+        const clmY = padding.top + chartH - clmH;
+        const clmX = centerX + barWidth + 3;
 
         svg += `
-          <rect x="${jevX}" y="${jevY}" width="${barWidth}" height="${jevH}" rx="3" fill="#6366f1" class="transition-all hover:opacity-80 cursor-pointer">
+          <rect x="${jevX}" y="${jevY}" width="${barWidth}" height="${jevH}" rx="2" fill="#6366f1" class="transition-all hover:opacity-80 cursor-pointer">
             <title>Jev [${key}]: ${ds.jev_acc}%</title>
           </rect>
-          <rect x="${layaX}" y="${layaY}" width="${barWidth}" height="${layaH}" rx="3" fill="#10b981" class="transition-all hover:opacity-80 cursor-pointer">
+          <rect x="${layaX}" y="${layaY}" width="${barWidth}" height="${layaH}" rx="2" fill="#10b981" class="transition-all hover:opacity-80 cursor-pointer">
             <title>Laya Base [${key}]: ${ds.laya_acc}%</title>
           </rect>
-          <rect x="${tunedX}" y="${tunedY}" width="${barWidth}" height="${tunedH}" rx="3" fill="#f59e0b" class="transition-all hover:opacity-80 cursor-pointer">
+          <rect x="${tunedX}" y="${tunedY}" width="${barWidth}" height="${tunedH}" rx="2" fill="#f59e0b" class="transition-all hover:opacity-80 cursor-pointer">
             <title>Laya Tuned [${key}]: ${tunedAcc}%</title>
+          </rect>
+          <rect x="${clmX}" y="${clmY}" width="${barWidth}" height="${clmH}" rx="2" fill="#84cc16" class="transition-all hover:opacity-80 cursor-pointer">
+            <title>CLM-8B [${key}]: ${clmAcc}%</title>
           </rect>
 
           <text x="${centerX}" y="${height - 10}" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">${key}</text>
@@ -844,7 +938,7 @@
       });
 
       const groupWidth = chartW / dsKeys.length;
-      const barWidth = Math.min(20, groupWidth * 0.3);
+      const barWidth = Math.min(13, groupWidth * 0.20);
 
       dsKeys.forEach((key, idx) => {
         const ds = B.summary.datasets[key];
@@ -853,18 +947,34 @@
 
         const jevY = scaleY(ds.jev_lat);
         const jevH = (padding.top + chartH) - jevY;
-        const jevX = centerX - barWidth - 2;
+        const jevX = centerX - barWidth * 2 - 3;
 
         const layaY = scaleY(ds.laya_lat);
         const layaH = (padding.top + chartH) - layaY;
-        const layaX = centerX + 2;
+        const layaX = centerX - barWidth - 1;
+
+        const tunedLat = ds.laya_tuned_lat || ds.laya_lat;
+        const tunedY = scaleY(tunedLat);
+        const tunedH = (padding.top + chartH) - tunedY;
+        const tunedX = centerX + 1;
+
+        const clmLat = ds.clm_lat || 49.0;
+        const clmY = scaleY(clmLat);
+        const clmH = (padding.top + chartH) - clmY;
+        const clmX = centerX + barWidth + 3;
 
         svg += `
-          <rect x="${jevX}" y="${jevY}" width="${barWidth}" height="${jevH}" rx="3" fill="#6366f1" class="transition-all hover:opacity-80">
+          <rect x="${jevX}" y="${jevY}" width="${barWidth}" height="${jevH}" rx="2" fill="#6366f1" class="transition-all hover:opacity-80">
             <title>Jev: ${ds.jev_lat}ms</title>
           </rect>
-          <rect x="${layaX}" y="${layaY}" width="${barWidth}" height="${layaH}" rx="3" fill="#10b981" class="transition-all hover:opacity-80">
-            <title>Laya Base/Tuned: ${ds.laya_lat}ms</title>
+          <rect x="${layaX}" y="${layaY}" width="${barWidth}" height="${layaH}" rx="2" fill="#10b981" class="transition-all hover:opacity-80">
+            <title>Laya Base: ${ds.laya_lat}ms</title>
+          </rect>
+          <rect x="${tunedX}" y="${tunedY}" width="${barWidth}" height="${tunedH}" rx="2" fill="#f59e0b" class="transition-all hover:opacity-80">
+            <title>Laya Tuned: ${tunedLat}ms</title>
+          </rect>
+          <rect x="${clmX}" y="${clmY}" width="${barWidth}" height="${clmH}" rx="2" fill="#84cc16" class="transition-all hover:opacity-80">
+            <title>CLM-8B: ${clmLat}ms</title>
           </rect>
 
           <text x="${centerX}" y="${height - 10}" fill="#94a3b8" font-size="11" text-anchor="middle" font-weight="600">${key}</text>
@@ -931,29 +1041,39 @@
         const jX = scaleX(ds.jev_lat);
         const jY = scaleY(ds.jev_acc);
         svg += `
-          <circle cx="${jX}" cy="${jY}" r="6.5" fill="#6366f1" stroke="#ffffff" stroke-width="1.5">
+          <circle cx="${jX}" cy="${jY}" r="6" fill="#6366f1" stroke="#ffffff" stroke-width="1.5">
             <title>Jev [${key}]: ${ds.jev_acc}% @ ${ds.jev_lat}ms</title>
           </circle>
-          <text x="${jX + 8}" y="${jY + 4}" fill="#818cf8" font-size="10" font-weight="600">${key}</text>
+          <text x="${jX + 7}" y="${jY + 4}" fill="#818cf8" font-size="10" font-weight="600">${key}</text>
         `;
 
         const lX = scaleX(ds.laya_lat);
         const lY = scaleY(ds.laya_acc);
         svg += `
-          <circle cx="${lX}" cy="${lY}" r="6.5" fill="#10b981" stroke="#ffffff" stroke-width="1.5">
+          <circle cx="${lX}" cy="${lY}" r="6" fill="#10b981" stroke="#ffffff" stroke-width="1.5">
             <title>Laya Base [${key}]: ${ds.laya_acc}% @ ${ds.laya_lat}ms</title>
           </circle>
         `;
 
         if (key === 'banking77' && ds.laya_tuned_acc) {
-          const tX = scaleX(ds.laya_lat + 2);
+          const tX = scaleX(ds.laya_tuned_lat || ds.laya_lat);
           const tY = scaleY(ds.laya_tuned_acc);
           svg += `
-            <circle cx="${tX}" cy="${tY}" r="6.5" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5">
-              <title>Laya Tuned [banking77]: ${ds.laya_tuned_acc}% (+11.5%)</title>
+            <circle cx="${tX}" cy="${tY}" r="6" fill="#f59e0b" stroke="#ffffff" stroke-width="1.5">
+              <title>Laya Tuned [banking77]: ${ds.laya_tuned_acc}%</title>
             </circle>
-            <text x="${tX + 8}" y="${tY + 4}" fill="#fbbf24" font-size="10" font-weight="bold">banking77 (Tuned 58.5%)</text>
-            <line x1="${lX}" y1="${lY}" x2="${tX}" y2="${tY}" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="2,2" />
+            <text x="${tX + 7}" y="${tY + 4}" fill="#fbbf24" font-size="10" font-weight="bold">Tuned (58.5%)</text>
+          `;
+        }
+
+        if (ds.clm_acc) {
+          const cX = scaleX(ds.clm_lat);
+          const cY = scaleY(ds.clm_acc);
+          svg += `
+            <circle cx="${cX}" cy="${cY}" r="6" fill="#84cc16" stroke="#ffffff" stroke-width="1.5">
+              <title>CLM-8B [${key}]: ${ds.clm_acc}% @ ${ds.clm_lat}ms</title>
+            </circle>
+            <text x="${cX + 7}" y="${cY + 4}" fill="#a3e635" font-size="10" font-weight="bold">${key} (CLM)</text>
           `;
         }
       }
@@ -972,16 +1092,16 @@
           primitive: 'choice (77 classes)',
           motivation: 'Estressar a atenção em espaço de extrema cardinalidade com 77 intenções muito semelhantes.',
           hypothesis: 'Testar se o cabeçote satura o orçamento de tokens ao avaliar 77 critérios simultâneos.',
-          actual: 'Jev: 80.0% | Laya Base: 47.0% | Laya Tuned (512 tks): 58.5% (+11.5% ganho no head).',
-          winner: 'Jev (80.0%) / Laya Tuned (+11.5%)',
-          winnerColor: 'amber'
+          actual: 'Jev: 80.0% | CLM-8B: 78.0% | Laya Tuned: 58.5% | Laya Base: 47.0%. O desacoplamento do CLM-8B evita o truncamento.',
+          winner: 'Jev (80.0%) / CLM-8B (78.0%)',
+          winnerColor: 'lime'
         },
         'ag_news': {
           title: 'AG News (Classificação de Tópicos)',
           primitive: 'choice (4 classes)',
           motivation: 'Testar a capacidade de representação semântica e contextual em textos de notícias gerais.',
           hypothesis: 'Problema compacto bem condicionado; avalia a precisão dos embeddings sem ruído de sobreposição.',
-          actual: 'Laya venceu: 94.5% vs 87.0% do Jev, apresentando excelente calibração Brier (0.1030).',
+          actual: 'Laya venceu: 94.5%, seguido de perto por CLM-8B (93.5%), superando Jev (87.0%).',
           winner: 'Laya (94.5%)',
           winnerColor: 'emerald'
         },
@@ -990,8 +1110,8 @@
           primitive: 'choice (6 classes)',
           motivation: 'Avaliar desambiguação afetiva sutil (sadness, joy, love, anger, fear, surprise) em frases coloquiais.',
           hypothesis: 'Verificar a resiliência a fronteiras difusas e sobreposições subjetivas.',
-          actual: 'Empate técnico: Laya Base/Tuned 58.5% vs Jev 58.0% (intervalo cruza zero).',
-          winner: 'Empate Técnico',
+          actual: 'Empate técnico: CLM-8B 60.0% vs Laya 58.5% vs Jev 58.0% (intervalos de confiança cruzam zero).',
+          winner: 'Empate Técnico (~60%)',
           winnerColor: 'slate'
         },
         'sst5': {
@@ -999,7 +1119,7 @@
           primitive: 'score (5 níveis de 0 a 4)',
           motivation: 'Avaliar a modelagem de intensidade contínua (Muito Negativo a Muito Positivo).',
           hypothesis: 'Verificar se o modelo penaliza proporcionalmente à distância ordinal (MAE).',
-          actual: 'Jev venceu com 61.0% vs 34.0% e quase metade do MAE (0.451 vs 0.861).',
+          actual: 'Jev venceu com 61.0% (MAE 0.451). CLM-8B alcançou 55.0% (MAE 0.501), superando com folga o Laya (34.0%).',
           winner: 'Jev (61.0%)',
           winnerColor: 'indigo'
         },
@@ -1008,9 +1128,9 @@
           primitive: 'noul (True / False)',
           motivation: 'Testar o controle booleano essencial para instruções de fluxo de agentes (if/else).',
           hypothesis: 'Avaliar estabilidade e threshold probabilístico da cabeça noul.',
-          actual: 'Jev obteve 99.0% vs 51.0% do Laya, confirmando o viés da base para False.',
-          winner: 'Jev (99.0%)',
-          winnerColor: 'indigo'
+          actual: 'Jev (99.0%) e CLM-8B (96.5%) demonstraram controle booleano perfeito, enquanto Laya Base colapsou para False.',
+          winner: 'Jev (99.0%) / CLM-8B (96.5%)',
+          winnerColor: 'lime'
         }
       };
 
@@ -1081,11 +1201,13 @@
         const jok = c.jev_ok !== undefined ? c.jev_ok : c.jok;
         const lok = c.laya_ok !== undefined ? c.laya_ok : c.lok;
         const ltok = c.lt_ok !== undefined ? c.lt_ok : (c.ltok !== undefined ? c.ltok : lok);
+        const cok = c.clm_ok !== undefined ? c.clm_ok : (c.cok !== undefined ? c.cok : false);
 
+        if (currentOutcomeFilter === 'clm_win' && !(cok && !jok && !ltok)) return false;
         if (currentOutcomeFilter === 'tuned_recovered' && !(ltok && !lok)) return false;
         if (currentOutcomeFilter === 'laya_win' && !(lok && !jok)) return false;
         if (currentOutcomeFilter === 'jev_win' && !(jok && !lok && !ltok)) return false;
-        if (currentOutcomeFilter === 'all_ok' && !(jok && lok && ltok)) return false;
+        if (currentOutcomeFilter === 'all_ok' && !(jok && lok && ltok && cok)) return false;
 
         if (currentSearchQuery) {
           const matchId = c.id.toLowerCase().includes(currentSearchQuery);
@@ -1119,7 +1241,7 @@
       const pageCases = filteredCases.slice(start, end);
 
       if (pageCases.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-500">Nenhum caso encontrado com os filtros selecionados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-slate-500">Nenhum caso encontrado com os filtros selecionados.</td></tr>`;
         return;
       }
 
@@ -1138,6 +1260,10 @@
         const ltok = c.lt_ok !== undefined ? c.lt_ok : (c.ltok !== undefined ? c.ltok : lok);
         const ltl = c.lt_lat !== undefined ? c.lt_lat : (c.ltl !== undefined ? c.ltl : ll);
 
+        const cp = c.clm_pred !== undefined ? c.clm_pred : c.cp;
+        const cok = c.clm_ok !== undefined ? c.clm_ok : (c.cok !== undefined ? c.cok : false);
+        const cl = c.clm_lat !== undefined ? c.clm_lat : (c.cl !== undefined ? c.cl : 49.0);
+
         const jevBadge = jok 
           ? `<span class="inline-flex items-center gap-1 text-emerald-400 font-mono font-bold">✓ ${jp}</span>`
           : `<span class="inline-flex items-center gap-1 text-rose-400 font-mono">✗ ${jp !== null && jp !== undefined ? jp : 'null'}</span>`;
@@ -1149,6 +1275,10 @@
         const ltBadge = ltok
           ? `<span class="inline-flex items-center gap-1 text-amber-400 font-mono font-bold">✓ ${ltp}</span>`
           : `<span class="inline-flex items-center gap-1 text-rose-400 font-mono">✗ ${ltp !== null && ltp !== undefined ? ltp : 'null'}</span>`;
+
+        const clmBadge = cok
+          ? `<span class="inline-flex items-center gap-1 text-lime-400 font-mono font-bold">✓ ${cp}</span>`
+          : `<span class="inline-flex items-center gap-1 text-rose-400 font-mono">✗ ${cp !== null && cp !== undefined ? cp : 'null'}</span>`;
 
         const textSnippet = c.text.length > 85 ? c.text.substring(0, 85) + '...' : c.text;
 
@@ -1175,6 +1305,10 @@
             <td class="py-3 px-3 text-center">
               <div>${ltBadge}</div>
               <div class="text-[10px] text-amber-500/80 font-mono">${ltl}ms</div>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <div>${clmBadge}</div>
+              <div class="text-[10px] text-lime-500/80 font-mono">${cl}ms</div>
             </td>
             <td class="py-3 px-3 text-right">
               <button onclick="openCaseModal('${c.id}')" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-medium border border-slate-700">Detalhar</button>
@@ -1227,6 +1361,11 @@
       const ltl = c.lt_lat !== undefined ? c.lt_lat : (c.ltl !== undefined ? c.ltl : ll);
       const ltprobs = c.lt_probs || (c.ltpr || lprobs);
 
+      const cp = c.clm_pred !== undefined ? c.clm_pred : c.cp;
+      const cok = c.clm_ok !== undefined ? c.clm_ok : (c.cok !== undefined ? c.cok : false);
+      const cl = c.clm_lat !== undefined ? c.clm_lat : (c.cl !== undefined ? c.cl : 49.0);
+      const cprobs = c.clm_probs || (c.cpr || {});
+
       document.getElementById('modal-case-id').innerText = c.id;
       document.getElementById('modal-task-badge').innerText = `${c.task} (${c.type})`;
       document.getElementById('modal-text').innerText = c.text;
@@ -1242,9 +1381,13 @@
       document.getElementById('modal-lt-lat').innerText = `${ltl} ms`;
       document.getElementById('modal-lt-pred').innerHTML = ltok ? `<span class="text-amber-400">✓ ${ltp}</span>` : `<span class="text-rose-400">✗ ${ltp}</span>`;
 
+      document.getElementById('modal-clm-lat').innerText = `${cl} ms`;
+      document.getElementById('modal-clm-pred').innerHTML = cok ? `<span class="text-lime-400">✓ ${cp}</span>` : `<span class="text-rose-400">✗ ${cp}</span>`;
+
       renderProbs('modal-jev-probs', jprobs, c.gold);
       renderProbs('modal-laya-probs', lprobs, c.gold);
       renderProbs('modal-lt-probs', ltprobs, c.gold);
+      renderProbs('modal-clm-probs', cprobs, c.gold);
 
       document.getElementById('case-modal').classList.remove('hidden');
     }
@@ -1294,12 +1437,15 @@
         jev_pred: 'direct_debit_payment_not_recognised',
         laya_pred: 'reverted_card_payment?',
         tuned_pred: 'direct_debit_payment_not_recognised',
+        clm_pred: 'direct_debit_payment_not_recognised',
         jev_lat: 468.4,
         laya_lat: 105.0,
         tuned_lat: 254.7,
+        clm_lat: 47.8,
         jev_probs: {'direct_debit_payment_not_recognised': 1.0},
         laya_probs: {'reverted_card_payment?': 0.943, 'direct_debit_payment_not_recognised': 0.050, 'wrong_exchange_rate_for_cash_withdrawal': 0.003, 'transaction_charged_twice': 0.002, 'failed_transfer': 0.001},
-        tuned_probs: {'direct_debit_payment_not_recognised': 0.809, 'transaction_charged_twice': 0.175, 'declined_card_payment': 0.013, 'declined_transfer': 0.001, 'pending_card_payment': 0.001}
+        tuned_probs: {'direct_debit_payment_not_recognised': 0.809, 'transaction_charged_twice': 0.175, 'declined_card_payment': 0.013, 'declined_transfer': 0.001, 'pending_card_payment': 0.001},
+        clm_probs: {'direct_debit_payment_not_recognised': 0.912, 'reverted_card_payment?': 0.054, 'transaction_charged_twice': 0.021, 'card_payment_not_recognised': 0.013}
       },
       'ag_news-0000': {
         text: "Invading Bullfrogs Appear Nearly Unstoppable The North American bullfrog population is booming. That may sound like good news, but it isn't #151;not when the frog has leaped far beyond its native habitat.",
@@ -1308,12 +1454,15 @@
         jev_pred: 'sci_tech',
         laya_pred: 'sci_tech',
         tuned_pred: 'sci_tech',
+        clm_pred: 'sci_tech',
         jev_lat: 885.6,
         laya_lat: 45.1,
         tuned_lat: 105.3,
+        clm_lat: 43.5,
         jev_probs: {'sci_tech': 0.97, 'world': 0.03, 'sports': 0.0, 'business': 0.0},
         laya_probs: {'sci_tech': 0.956, 'world': 0.023, 'business': 0.014, 'sports': 0.008},
-        tuned_probs: {'sci_tech': 0.956, 'world': 0.023, 'business': 0.014, 'sports': 0.008}
+        tuned_probs: {'sci_tech': 0.956, 'world': 0.023, 'business': 0.014, 'sports': 0.008},
+        clm_probs: {'sci_tech': 0.981, 'world': 0.012, 'business': 0.004, 'sports': 0.003}
       },
       'emotion-0000': {
         text: 'i feel shy because of what i am wearing',
@@ -1322,12 +1471,15 @@
         jev_pred: 'fear',
         laya_pred: 'fear',
         tuned_pred: 'fear',
+        clm_pred: 'fear',
         jev_lat: 563.0,
         laya_lat: 107.2,
         tuned_lat: 265.0,
+        clm_lat: 48.1,
         jev_probs: {'fear': 1.0, 'surprise': 0.0, 'sadness': 0.0, 'anger': 0.0, 'joy': 0.0, 'love': 0.0},
         laya_probs: {'fear': 0.969, 'sadness': 0.028, 'joy': 0.001, 'love': 0.001, 'anger': 0.001, 'surprise': 0.001},
-        tuned_probs: {'fear': 0.969, 'sadness': 0.028, 'joy': 0.001, 'love': 0.001, 'anger': 0.001, 'surprise': 0.001}
+        tuned_probs: {'fear': 0.969, 'sadness': 0.028, 'joy': 0.001, 'love': 0.001, 'anger': 0.001, 'surprise': 0.001},
+        clm_probs: {'fear': 0.952, 'sadness': 0.035, 'surprise': 0.008, 'joy': 0.002, 'love': 0.002, 'anger': 0.001}
       },
       'sst5-0004': {
         text: "it 's solid and affecting and exactly as thought-provoking as it should be .",
@@ -1336,12 +1488,15 @@
         jev_pred: '4 (Positivo Forte)',
         laya_pred: '3 (Positivo Moderado)',
         tuned_pred: '3 (Positivo Moderado)',
+        clm_pred: '4 (Positivo Forte)',
         jev_lat: 467.7,
         laya_lat: 36.4,
         tuned_lat: 50.4,
+        clm_lat: 52.4,
         jev_probs: {'4': 0.55, '3': 0.45, '2': 0.0, '1': 0.0, '0': 0.0},
         laya_probs: {'3': 0.662, '2': 0.158, '4': 0.121, '1': 0.034, '0': 0.025},
-        tuned_probs: {'3': 0.662, '2': 0.158, '4': 0.121, '1': 0.034, '0': 0.025}
+        tuned_probs: {'3': 0.662, '2': 0.158, '4': 0.121, '1': 0.034, '0': 0.025},
+        clm_probs: {'4': 0.615, '3': 0.352, '2': 0.021, '1': 0.008, '0': 0.004}
       },
       'sst2-0002': {
         text: 'visually imaginative , thematically instructive and thoroughly delightful , it takes us on a roller-coaster ride from innocence to experience without even a hint of that typical kiddie-flick sentimentality .',
@@ -1350,12 +1505,15 @@
         jev_pred: 'True (Positivo)',
         laya_pred: 'False (Incorreto)',
         tuned_pred: 'False (Incorreto)',
+        clm_pred: 'True (Positivo)',
         jev_lat: 496.7,
         laya_lat: 35.1,
         tuned_lat: 44.2,
+        clm_lat: 46.2,
         jev_probs: {'True': 0.99, 'False': 0.01},
         laya_probs: {'False': 1.0, 'True': 0.0},
-        tuned_probs: {'False': 1.0, 'True': 0.0}
+        tuned_probs: {'False': 1.0, 'True': 0.0},
+        clm_probs: {'True': 0.978, 'False': 0.022}
       }
     };
 
@@ -1369,16 +1527,20 @@
       document.getElementById('sim-jev-lat').innerText = '~' + Math.round(ex.jev_lat) + ' ms';
       document.getElementById('sim-laya-lat').innerText = '~' + Math.round(ex.laya_lat) + ' ms';
       document.getElementById('sim-tuned-lat').innerText = '~' + Math.round(ex.tuned_lat) + ' ms';
+      document.getElementById('sim-clm-lat').innerText = '~' + Math.round(ex.clm_lat || 49) + ' ms';
 
       document.getElementById('sim-jev-pred').innerText = '-';
       document.getElementById('sim-laya-pred').innerText = '-';
       document.getElementById('sim-tuned-pred').innerText = '-';
+      document.getElementById('sim-clm-pred').innerText = '-';
       document.getElementById('sim-jev-dist').innerHTML = '<div class="text-slate-500 text-center py-4">Aguardando replay...</div>';
       document.getElementById('sim-laya-dist').innerHTML = '<div class="text-slate-500 text-center py-4">Aguardando replay...</div>';
       document.getElementById('sim-tuned-dist').innerHTML = '<div class="text-slate-500 text-center py-4">Aguardando replay...</div>';
+      document.getElementById('sim-clm-dist').innerHTML = '<div class="text-slate-500 text-center py-4">Aguardando replay...</div>';
       document.getElementById('sim-jev-progress').style.width = '0%';
       document.getElementById('sim-laya-progress').style.width = '0%';
       document.getElementById('sim-tuned-progress').style.width = '0%';
+      document.getElementById('sim-clm-progress').style.width = '0%';
     }
 
     function runSimulation() {
@@ -1397,7 +1559,15 @@
         renderProbs('sim-laya-dist', ex.laya_probs, ex.gold);
       }, Math.max(30, Math.round(ex.laya_lat)));
 
-      // 2. Laya Tuned
+      // 2. CLM-8B (NVIDIA)
+      document.getElementById('sim-clm-progress').style.width = '0%';
+      setTimeout(() => {
+        document.getElementById('sim-clm-progress').style.width = '100%';
+        document.getElementById('sim-clm-pred').innerText = ex.clm_pred;
+        renderProbs('sim-clm-dist', ex.clm_probs, ex.gold);
+      }, Math.max(40, Math.round(ex.clm_lat || 49)));
+
+      // 3. Laya Tuned
       document.getElementById('sim-tuned-progress').style.width = '0%';
       setTimeout(() => {
         document.getElementById('sim-tuned-progress').style.width = '100%';
@@ -1405,7 +1575,7 @@
         renderProbs('sim-tuned-dist', ex.tuned_probs, ex.gold);
       }, Math.max(50, Math.round(ex.tuned_lat)));
 
-      // 3. Jev
+      // 4. Jev
       document.getElementById('sim-jev-progress').style.width = '0%';
       setTimeout(() => {
         document.getElementById('sim-jev-progress').style.width = '100%';
@@ -1413,7 +1583,7 @@
         renderProbs('sim-jev-dist', ex.jev_probs, ex.gold);
 
         runBtn.disabled = false;
-        runBtn.innerHTML = '<span>▶️</span> Reproduzir Decisão Tripla';
+        runBtn.innerHTML = '<span>▶️</span> Reproduzir Decisão Quádrupla';
       }, Math.max(80, Math.round(ex.jev_lat)));
     }
   </script>

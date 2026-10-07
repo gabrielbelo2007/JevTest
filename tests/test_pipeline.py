@@ -13,6 +13,7 @@ import bench.cli as cli
 import bench.report as report
 import bench.tasks as tasks
 from bench.clients.base import Prediction
+from bench.clients.clm import CLMClient
 from bench.clients.jev import JevClient
 from bench.tasks import Case
 
@@ -128,8 +129,43 @@ def test_relatorio_gera_sem_rede_e_pareado(tmp_path, monkeypatch):
         "jev": [_pred(c, "a") for c in cases],
         "laya": [_pred(c, "a" if i < 2 else "b") for i, c in enumerate(cases)],
         "laya-tuned": [_pred(c, "a" if i < 3 else "b") for i, c in enumerate(cases)],
+        "clm": [_pred(c, "a" if i < 3 else "b") for i, c in enumerate(cases)],
     }
     md = report.generate_report(cases, preds, report_file=tmp_path / "r.md")
     assert "100.0%" in md and "50.0%" in md and "75.0%" in md
+    assert "CLM-8B" in md
     assert "Efeito do Ajuste" in md
     assert (tmp_path / "r.md").exists()
+
+
+# ---------- cliente CLM (HTTP simulado) ----------
+
+def _clm_with(handler):
+    c = CLMClient(api_key="k")
+    c.client = httpx.Client(transport=httpx.MockTransport(handler))
+    return c
+
+
+def test_clm_choice_noul_score_e_erro_http():
+    def handler(req):
+        q = list(json.loads(req.content)["questions"].keys())[0]
+        return httpx.Response(200, json={"answers": {q: handler.answer}})
+
+    clm = _clm_with(handler)
+
+    handler.answer = {"choice": "b", "probabilities": {"a": 0.2, "b": 0.8}}
+    p = clm.predict(_case(gold="b"))
+    assert p.ok and p.pred == "b" and p.probs["b"] == 0.8 and p.model == "clm"
+
+    handler.answer = {"p_true": 0.95}
+    p = clm.predict(_case(qtype="noul", gold=True))
+    assert p.ok and p.pred is True and p.p_true == 0.95
+
+    handler.answer = {"score": 2.8}
+    p = clm.predict(_case(qtype="score", gold=3, criteria=["0", "1", "2", "3", "4"]))
+    assert p.ok and p.pred == 3 and p.score_value == 2.8
+
+    bad = _clm_with(lambda req: httpx.Response(500, text="internal server error"))
+    p = bad.predict(_case())
+    assert not p.ok and "HTTP 500" in p.error and p.pred is None
+

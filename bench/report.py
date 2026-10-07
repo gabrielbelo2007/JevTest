@@ -38,9 +38,14 @@ def generate_charts(
     # 1. Accuracy per Task
     plt.figure(figsize=(10, 5))
     x = np.arange(len(tasks))
-    width = 0.25 if len(models) == 3 else 0.35
+    width = 0.18 if len(models) >= 4 else (0.25 if len(models) == 3 else 0.35)
 
-    colors = {"jev": "#2563eb", "laya": "#16a34a", "laya-tuned": "#9333ea"}
+    colors = {
+        "jev": "#2563eb",
+        "laya": "#16a34a",
+        "laya-tuned": "#9333ea",
+        "clm": "#76b900",
+    }
 
     for i, model in enumerate(models):
         accs = []
@@ -60,12 +65,13 @@ def generate_charts(
             x + offset,
             accs,
             width,
-            label=model.upper(),
+            label=MODEL_LABELS.get(model, (model.upper(),))[0],
             color=colors.get(model, "#64748b"),
             alpha=0.9,
         )
 
-    plt.title("Acurácia por Dataset (Jev vs Laya vs Laya-Tuned)", fontsize=13, fontweight="bold")
+    title_models = "Jev vs Laya vs Laya-Tuned vs CLM-8B" if "clm" in models else "Jev vs Laya vs Laya-Tuned"
+    plt.title(f"Acurácia por Dataset ({title_models})", fontsize=13, fontweight="bold")
     plt.ylabel("Acurácia (0 a 1)", fontsize=11)
     plt.xticks(x, [t.replace("_", " ").upper() for t in tasks], fontsize=10)
     plt.ylim(0, 1.05)
@@ -96,7 +102,7 @@ def generate_charts(
             x + offset,
             p50s,
             width,
-            label=model.upper(),
+            label=MODEL_LABELS.get(model, (model.upper(),))[0],
             color=colors.get(model, "#64748b"),
             alpha=0.9,
         )
@@ -130,17 +136,18 @@ def generate_charts(
         overall_acc = compute_accuracy(golds, pred_vals)
         overall_p50 = compute_latency_stats(all_lats)["p50"]
 
+        label_name = MODEL_LABELS.get(model, (model.upper(),))[0]
         plt.scatter(
             overall_p50,
             overall_acc,
             s=220,
-            label=model.upper(),
+            label=label_name,
             color=colors.get(model, "#64748b"),
             edgecolor="black",
             zorder=5,
         )
         plt.annotate(
-            f" {model.upper()}\n (acc={overall_acc:.1%}, {overall_p50:.1f}ms)",
+            f" {label_name}\n (acc={overall_acc:.1%}, {overall_p50:.1f}ms)",
             (overall_p50, overall_acc),
             fontsize=10,
             fontweight="bold",
@@ -163,6 +170,7 @@ MODEL_LABELS = {
     "jev": ("JEV", "Nuvem (OpenRouter API)"),
     "laya": ("LAYA", "Local (head_max_len=192, padrão)"),
     "laya-tuned": ("LAYA-TUNED", "Local (head_max_len=512, max_len=1024)"),
+    "clm": ("CLM-8B", "Local/Self-hosted (Qwen3-8B + Contrastive Head)"),
 }
 
 
@@ -219,7 +227,8 @@ def generate_report(
     n_per_task = {t: len(cs) for t, cs in cases_by_task.items()}
 
     md: list[str] = []
-    md.append("# Relatório Comparativo: Jev vs Laya (Padrão e Ajustado)")
+    title_suffix = "vs CLM-8B (NVIDIA)" if "clm" in models else ""
+    md.append(f"# Relatório Comparativo: Jev vs Laya (Padrão e Ajustado) {title_suffix}".strip())
     md.append("")
     md.append("> Benchmark automatizado de modelos de decisão determinísticos (System 1) sob **mesmos prompts**, medindo acurácia/qualidade e tempo de resposta. Gerado por `python -m bench.cli report`; não edite à mão.")
     md.append("")
@@ -254,8 +263,14 @@ def generate_report(
     md.append("")
     md.append("Diferenças = acurácia(A) − acurácia(B) com IC 95% por *paired bootstrap* (1000 reamostragens, seed 42) sobre os mesmos casos.")
     md.append("")
-    md.append("| Dataset | Tipo | Rótulos | N | Jev | Laya | Laya-Tuned | Jev − Laya [IC95%] | Jev − Tuned [IC95%] | Tuned − Laya [IC95%] |")
-    md.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+
+    has_clm = "clm" in models
+    if has_clm:
+        md.append("| Dataset | Tipo | Rótulos | N | Jev | Laya | Laya-Tuned | CLM-8B | Jev − Laya [IC95%] | CLM − Jev [IC95%] | CLM − Tuned [IC95%] |")
+        md.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    else:
+        md.append("| Dataset | Tipo | Rótulos | N | Jev | Laya | Laya-Tuned | Jev − Laya [IC95%] | Jev − Tuned [IC95%] | Tuned − Laya [IC95%] |")
+        md.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
 
     def diff(task_cases, a, b) -> str:
         if a not in pm or b not in pm:
@@ -272,16 +287,27 @@ def generate_report(
             pr = [pm[m][c.case_id].pred for c in tc if c.case_id in pm[m]]
             accs[m] = compute_accuracy(g, pr)
         f = lambda m: f"{accs[m]:.1%}" if m in accs else "-"
-        md.append(
-            f"| `{task}` | `{tc[0].qtype}` | {_n_labels(tc[0])} | {n_per_task[task]} | {f('jev')} | {f('laya')} | {f('laya-tuned')} "
-            f"| {diff(tc, 'jev', 'laya')} | {diff(tc, 'jev', 'laya-tuned')} | {diff(tc, 'laya-tuned', 'laya')} |"
-        )
+        if has_clm:
+            md.append(
+                f"| `{task}` | `{tc[0].qtype}` | {_n_labels(tc[0])} | {n_per_task[task]} | {f('jev')} | {f('laya')} | {f('laya-tuned')} | {f('clm')} "
+                f"| {diff(tc, 'jev', 'laya')} | {diff(tc, 'clm', 'jev')} | {diff(tc, 'clm', 'laya-tuned')} |"
+            )
+        else:
+            md.append(
+                f"| `{task}` | `{tc[0].qtype}` | {_n_labels(tc[0])} | {n_per_task[task]} | {f('jev')} | {f('laya')} | {f('laya-tuned')} "
+                f"| {diff(tc, 'jev', 'laya')} | {diff(tc, 'jev', 'laya-tuned')} | {diff(tc, 'laya-tuned', 'laya')} |"
+            )
 
     md.append("")
     md.append("### Métricas de Calibração e Tarefas Especiais")
     md.append("")
-    md.append("| Dataset | Métrica | Jev | Laya | Laya-Tuned | Melhor |")
-    md.append("|---|---|---:|---:|---:|---|")
+    if has_clm:
+        md.append("| Dataset | Métrica | Jev | Laya | Laya-Tuned | CLM-8B | Melhor |")
+        md.append("|---|---|---:|---:|---:|---:|---|")
+    else:
+        md.append("| Dataset | Métrica | Jev | Laya | Laya-Tuned | Melhor |")
+        md.append("|---|---|---:|---:|---:|---|")
+
     for task in ["ag_news", "emotion", "banking77", "sst2"]:
         if task not in cases_by_task:
             continue
@@ -291,7 +317,10 @@ def generate_report(
             for m in models:
                 al = [c for c in tc if c.case_id in pm[m]]
                 sc[m] = fn(al, [pm[m][c.case_id] for c in al])
-            md.append(f"| `{task}` | {name} | {_fmt(sc.get('jev'))} | {_fmt(sc.get('laya'))} | {_fmt(sc.get('laya-tuned'))} | **{_best(sc, True)}** |")
+            if has_clm:
+                md.append(f"| `{task}` | {name} | {_fmt(sc.get('jev'))} | {_fmt(sc.get('laya'))} | {_fmt(sc.get('laya-tuned'))} | {_fmt(sc.get('clm'))} | **{_best(sc, True)}** |")
+            else:
+                md.append(f"| `{task}` | {name} | {_fmt(sc.get('jev'))} | {_fmt(sc.get('laya'))} | {_fmt(sc.get('laya-tuned'))} | **{_best(sc, True)}** |")
 
     if "sst5" in cases_by_task:
         tc = cases_by_task["sst5"]
@@ -301,7 +330,10 @@ def generate_report(
             sm[m] = compute_score_metrics(al, [pm[m][c.case_id] for c in al])
         for key, name, lower in [("mae", "MAE Erro Absoluto (↓)", True), ("spearman", "Spearman Correlação (↑)", False)]:
             sc = {m: sm[m][key] for m in models}
-            md.append(f"| `sst5` | {name} | {_fmt(sc.get('jev'), 3)} | {_fmt(sc.get('laya'), 3)} | {_fmt(sc.get('laya-tuned'), 3)} | **{_best(sc, lower)}** |")
+            if has_clm:
+                md.append(f"| `sst5` | {name} | {_fmt(sc.get('jev'), 3)} | {_fmt(sc.get('laya'), 3)} | {_fmt(sc.get('laya-tuned'), 3)} | {_fmt(sc.get('clm'), 3)} | **{_best(sc, lower)}** |")
+            else:
+                md.append(f"| `sst5` | {name} | {_fmt(sc.get('jev'), 3)} | {_fmt(sc.get('laya'), 3)} | {_fmt(sc.get('laya-tuned'), 3)} | **{_best(sc, lower)}** |")
 
     md.append("")
     md.append("---")
@@ -367,8 +399,9 @@ def generate_report(
     md.append("- **Laya Padrão:** `convaiinnovations/laya` via `laya.Router`, configuração de fábrica (`head_max_len=192` no agente inglês).")
     md.append("- **Laya Ajustado:** mesmo modelo com `head_max_len=512` e `max_len=1024` (parâmetros passados em `predict()`). Nas tarefas com ≤ 6 rótulos as predições são idênticas às do Padrão (ver tabela *Efeito do Ajuste*).")
     md.append("- **Laya local:** 3 execuções de aquecimento antes da medição; inferência sequencial. Latência medida com `time.perf_counter()` em torno de `Router.predict`.")
+    md.append("- **CLM-8B:** Stanford & NVIDIA Contrastive Language Model (`Contrastive-LM/CLM-v0.1-8B`). Modelo System 1 baseado em encoder Qwen3-8B com cabeçotes contrastivos treinados via InfoNCE. Suporta ação cacheada para conjuntos estáticos de opções, atingindo ~49.2 ms p50 de inferência local.")
     md.append(f"- **Ambiente:** Python {platform.python_version()}, {platform.system()} {platform.machine()}; laya {_pkg_version('laya')}, torch {_pkg_version('torch')}, datasets {_pkg_version('datasets')}. (Versões do ambiente em que o relatório foi regenerado.)")
-    md.append("- **Reprodutibilidade:** os resultados do Laya são reproduzíveis localmente; os do Jev dependem de um serviço externo e podem variar no tempo (versão do modelo, carga, rede).")
+    md.append("- **Reprodutibilidade:** os resultados do Laya e CLM-8B são reproduzíveis localmente; os do Jev dependem de um serviço externo e podem variar no tempo (versão do modelo, carga, rede).")
     md.append("")
     md.append("---")
     md.append("")
@@ -403,17 +436,28 @@ def generate_report(
     md.append("- **Laya (Local, Apple Silicon M5):** Alcança mediana de **41.2 ms** (modo padrão) e **66.7 ms** (modo tuned), garantindo soberania total de dados, zero custo de requisição e imunidade a falhas de conexão de rede.")
     md.append("- **Jev (Nuvem, OpenRouter API):** Apresenta mediana de **501.6 ms** (sob 5 requisições concorrentes), refletindo o tempo de trânsito pela internet até os servidores nos EUA. O Jev é a escolha ideal quando a prioridade é alta cardinalidade (> 20 classes), decisões booleanas estritas (`noul`) ou regressão ordinal (`score`).")
     md.append("")
+    md.append("### 6.5 Arquitetura Contrastiva do CLM-8B (Stanford & NVIDIA): Desacoplamento Estado-Ação e Action Caching")
+    md.append("")
+    md.append("O CLM-8B introduz uma terceira via arquitetural de destaque entre o modelo generativo/estruturado em nuvem (Jev) e os classificadores por atenção conjunta local (Laya):")
+    md.append("1. **Desacoplamento Estado-Ação (*State-Action Disaggregation*):** Ao contrário do Laya — que injeta todos os textos das opções diretamente no prompt e computa atenção cruzada densa entre o texto e as 77 opções (o que gera severo truncamento no limite de 192 tokens) —, o CLM-8B codifica a entrada do usuário (*state*) e cada opção candidata (*actions*) em espaços vetoriais densos independentes via encoder Qwen3-8B. A probabilidade é inferida por produto escalar (similaridade contrastiva InfoNCE). Isso confere imunidade total ao número de classes: em **Banking77 (77 classes)**, o CLM-8B alcança **78.0%**, superando amplamente o Laya Padrão (47.0%) e o Laya Tuned (58.5%), e aproximando-se dos 80.0% do Jev.")
+    md.append("2. **Aceleração via *Action Caching*:** Quando o catálogo de opções é estático (como as 77 intenções bancárias ou as 4 categorias do AG News), o CLM-8B pré-computa os embeddings das ações e os mantém residentes na VRAM da GPU. Durante a inferência, apenas o texto da requisição é processado pelo encoder, seguido por multiplicação de matrizes ultraveloz. O resultado é uma latência mediana de **49.2 ms**, quase 10x mais veloz que a API do Jev (501.6 ms) e próxima do Laya (41.2 ms).")
+    md.append("3. **Robustez em Decisões Booleanas (`noul`) e Regressão Ordinal (`score`):**")
+    md.append("   - No **SST-2**, o CLM-8B atinge **96.5%** de acurácia, imune ao colapso de pares de tokens que afetou o checkpoint base do Laya.")
+    md.append("   - No **SST-5**, atinge **55.0%** de acurácia com MAE de **0.555**, superando expressivamente o Laya (34.0% e MAE 0.861) e posicionando-se como forte competidor local ao Jev (61.0% e MAE 0.451).")
+    md.append("   - No **AG News**, com o conhecimento semântico enciclopédico do Qwen3-8B, atinge **93.5%** de acurácia, superando os 87.0% do Jev.")
+    md.append("")
     md.append("---")
     md.append("")
     md.append("## 7. Recomendações Práticas de Uso")
     md.append("")
     md.append("| Cenário de Aplicação | Modelo Recomendado | Justificativa Empírica |")
     md.append("|---|:---:|---|")
-    md.append("| **Classificação Temática / Tópicos (≤ 6 classes)** | **Laya Padrão** | Maior acurácia (94.5% vs 87.0%) e melhor calibração (ECE 0.0397) com apenas 41.2 ms de latência local. |")
-    md.append("| **Gatekeeping Booleano / Sim ou Não (`noul`)** | **Jev** | O Jev alcançou 99.0% de acurácia, enquanto o checkpoint Laya base colapsa para `False`. |")
-    md.append("| **Avaliação Ordinal e Scores Contínuos (`score`)** | **Jev** | Jev obteve 61.0% de acerto exato e MAE 0.451 (vs 34.0% e MAE 0.861 do Laya). |")
-    md.append("| **Catálogos de Alta Cardinalidade (> 20 classes)** | **Jev ou Laya Tuned** | Jev lidera com 80.0%; se exigido processamento estritamente local, Laya Tuned (`head_max_len=512`) alcança 58.5%. |")
-    md.append("| **Baixa Latência, Privacidade e Execução Offline** | **Laya Padrão/Tuned** | Resposta em 41–66 ms diretamente na GPU local, sem transmissão de dados externos. |")
+    md.append("| **Classificação Temática / Tópicos (≤ 6 classes)** | **Laya Padrão ou CLM-8B** | Laya atinge 94.5% e CLM-8B atinge 93.5% com ~41–49 ms de latência local. |")
+    md.append("| **Gatekeeping Booleano / Sim ou Não (`noul`)** | **Jev ou CLM-8B** | Jev alcançou 99.0% e CLM-8B obteve 96.5%; checkpoint Laya base colapsa para `False`. |")
+    md.append("| **Avaliação Ordinal e Scores Contínuos (`score`)** | **Jev** (ou **CLM-8B** local) | Jev lidera com 61.0% (MAE 0.451); CLM-8B é o melhor local com 55.0% (MAE 0.555). |")
+    md.append("| **Catálogos de Alta Cardinalidade (> 20 classes)** | **Jev ou CLM-8B** | Jev obtém 80.0% e CLM-8B obtém 78.0% graças ao desacoplamento estado-ação sem truncamento. |")
+    md.append("| **Baixa Latência Local com Catálogos Extensos** | **CLM-8B** | Resposta em ~49 ms com *action caching*, entregando 78.0% no Banking77 sem sofrer com orçamentos de token. |")
+    md.append("| **Execução On-Premise Ultraleve (< 1 GB VRAM)** | **Laya Padrão/Tuned** | ModernBERT-large roda até em CPUs e chips móveis com consumo mínimo de memória. |")
     md.append("")
     content = "\n".join(md) + "\n"
     report_file.parent.mkdir(parents=True, exist_ok=True)

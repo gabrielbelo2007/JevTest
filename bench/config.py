@@ -27,6 +27,11 @@ OPENROUTER_API_KEY = get_env_var("OPENROUTER_API_KEY", "openrouter_api_key")
 OPENROUTER_ENDPOINT = os.getenv("OPENROUTER_ENDPOINT", "https://openrouter.ai/api/alpha/decisions")
 JEV_MODEL = os.getenv("JEV_MODEL", "typesafe/jev-1.13")
 
+# CLM-8B (Stanford & NVIDIA Contrastive Language Model) settings
+CLM_ENDPOINT = os.getenv("CLM_ENDPOINT", "http://127.0.0.1:8700/v1/systemone")
+CLM_MODEL = os.getenv("CLM_MODEL", "Contrastive-LM/CLM-v0.1-8B")
+CLM_API_KEY = get_env_var("CLM_API_KEY", "clm_api_key", default="")
+
 # Benchmark settings
 SEED = 42
 SAMPLES_PER_TASK = 200
