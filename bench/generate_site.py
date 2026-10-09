@@ -23,7 +23,7 @@ TEMPLATE_PATH = ROOT_DIR / "bench" / "site_template.html"
 SITE_DIR = ROOT_DIR / "site"
 DATA_JS_PATH = SITE_DIR / "data.js"
 INDEX_HTML_PATH = SITE_DIR / "index.html"
-ARTIFACT_DIR = Path("/Users/gb/.gemini/antigravity/brain/f7121e6d-6ac7-421f-be61-38c96253845e")
+ARTIFACT_DIR = Path("/Users/gb/.gemini/antigravity/brain/81c6b5d6-65bf-41a5-a8b6-87beb0a356fd")
 
 TASK_DISPLAY_NAMES = {
     "ag_news": "AG News",
@@ -545,10 +545,13 @@ def main() -> None:
     print(f"site/index.html gerado com sucesso ({INDEX_HTML_PATH}).")
 
     # 4. Copy to brain artifact directory if accessible
-    if ARTIFACT_DIR.is_dir():
-        target_art = ARTIFACT_DIR / "benchmark_dashboard.html"
-        shutil.copyfile(INDEX_HTML_PATH, target_art)
-        print(f"Artifact atualizado em: {target_art}")
+    try:
+        if ARTIFACT_DIR.is_dir():
+            target_art = ARTIFACT_DIR / "benchmark_dashboard.html"
+            shutil.copyfile(INDEX_HTML_PATH, target_art)
+            print(f"Artifact atualizado em: {target_art}")
+    except Exception as e:
+        print(f"Aviso ao copiar artifact: {e}")
 
     print("\nResumo Final da Geração do Site:")
     print(f"- Casos: {len(cases)}")
