@@ -26,6 +26,7 @@ def get_env_var(*names: str, default: str = "") -> str:
 OPENROUTER_API_KEY = get_env_var("OPENROUTER_API_KEY", "openrouter_api_key")
 OPENROUTER_ENDPOINT = os.getenv("OPENROUTER_ENDPOINT", "https://openrouter.ai/api/alpha/decisions")
 JEV_MODEL = os.getenv("JEV_MODEL", "typesafe/jev-1.13")
+OPENAI_DECISION_MODEL = os.getenv("OPENAI_DECISION_MODEL", "openai/gpt-6-luna-decisions")
 
 # CLM-8B (Stanford & NVIDIA Contrastive Language Model) settings
 CLM_ENDPOINT = os.getenv("CLM_ENDPOINT", "http://127.0.0.1:8700/v1/systemone")

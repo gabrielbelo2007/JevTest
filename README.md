@@ -1,12 +1,13 @@
-# Benchmark Comparativo: Jev vs Laya (Padrão e Ajustado) vs CLM-8B (NVIDIA)
+# Benchmark Comparativo: Jev vs OpenAI Decisions vs CLM-8B vs Laya (Padrão e Ajustado)
 
 > Suíte automatizada, reprodutível e emparelhada para avaliação de modelos determinísticos de decisão (**System 1**):
 > - **Jev** (`typesafe/jev-1.13` via OpenRouter Decisions API)
+> - **OpenAI Decisions** (`openai/gpt-6-luna-decisions` via OpenRouter Decisions API)
 > - **CLM-8B** (`Contrastive-LM/CLM-v0.1-8B`, Stanford & NVIDIA System 1 via servidor local/vLLM)
 > - **Laya Ajustado** (`convaiinnovations/laya`, inferência local com `head_max_len=512` e `max_len=1024`)
 > - **Laya Padrão** (`convaiinnovations/laya`, inferência local sequencial, `head_max_len=192`)
 
-Avaliação sob **mesmos prompts**, mesmos dados de entrada (`state`) e mesmas perguntas (`questions`) em 5 datasets públicos com 200 amostras cada (1.000 prompts idênticos por modelo, **4.000 predições auditadas** no total).
+Avaliação sob **mesmos prompts**, mesmos dados de entrada (`state`) e mesmas perguntas (`questions`) em 5 datasets públicos com 200 amostras cada (1.000 prompts idênticos por modelo, **5.000 predições auditadas** no total).
 
 ---
 
@@ -16,17 +17,20 @@ Avaliação sob **mesmos prompts**, mesmos dados de entrada (`state`) e mesmas p
 |---|---|---:|---:|---:|---:|---:|
 | **JEV** | Nuvem (OpenRouter Decisions API) | **77.0%** | 0.744 | 501.6 ms | 868.9 ms | 100.0% |
 | **CLM-8B** | Local / vLLM (NVIDIA & Stanford) | **76.6%** | 0.742 | 49.2 ms | 86.1 ms | 100.0% |
+| **OPENAI** | Nuvem (OpenRouter Decisions API - GPT-6 Luna) | **74.1%** | 0.740 | 539.8 ms | 646.2 ms | 99.9%* |
 | **LAYA-TUNED** | Local (`head_max_len=512`, `max_len=1024`) | **59.3%** | 0.488 | 66.7 ms | 242.8 ms | 100.0% |
 | **LAYA PADRÃO** | Local (`head_max_len=192`, fábrica) | **57.0%** | 0.384 | 41.2 ms | 101.8 ms | 100.0% |
 
+*\*1 caso sofreu recusa de segurança (safety guardrail) no Banking77 (`banking77-0123`), contabilizado como erro.*
+
 > 📖 **Relatório Completo e Análise Arquitetural:**  
-> A dissecação técnica aprofundada, as métricas de calibração (Brier/ECE), o desacoplamento estado-ação via Action Caching do CLM-8B, a análise da expansão de cabeçote no Banking77 (+11.5%), o comportamento no AG News (94.5%) e os gráficos comparativos estão documentados em detalhe no **[`results/report.md`](results/report.md)** e em **[`results/datasets.md`](results/datasets.md)**.
+> A dissecação técnica aprofundada, as métricas de calibração (Brier/ECE), o comportamento no Banking77 (Jev 80%, OpenAI 79%, CLM 78%), o domínio do Laya no AG News (94.5%) e os gráficos comparativos estão documentados em detalhe no **[`results/report.md`](results/report.md)** e em **[`results/datasets.md`](results/datasets.md)**.
 
 ---
 
 ## 🌐 Painel Web Interativo (Dashboard)
 
-O projeto inclui um website estático completo (`site/index.html`) para inspecionar métricas, filtrar e auditar visualmente os 1.000 casos e testar o replay de decisões entre os 4 modelos:
+O projeto inclui um website estático completo (`site/index.html`) para inspecionar métricas, filtrar e auditar visualmente os 1.000 casos e testar o replay de decisões entre os 5 modelos:
 
 ```bash
 # Abrir diretamente no navegador:
@@ -68,17 +72,19 @@ cp .env.example .env
 Edite o arquivo `.env`:
 ```env
 OPENROUTER_API_KEY=sua-chave-aqui
+# Opcional para modelo OpenAI customizado (padrão: openai/gpt-6-luna-decisions):
+# OPENAI_DECISION_MODEL=openai/gpt-6-luna-decisions
 # Opcional para CLM-8B se você rodar um servidor customizado:
 # CLM_ENDPOINT=http://127.0.0.1:8000/v1/systemone
 ```
-> **Nota:** Apenas o **Jev** requer `OPENROUTER_API_KEY`. O **Laya Padrão** e o **Laya Tuned** rodam 100% locais na sua máquina e **não necessitam de nenhuma chave de API**. O **CLM-8B** conecta-se a um endpoint local compatível (`clm-serve`/vLLM).
+> **Nota:** Os modelos de nuvem (**Jev** e **OpenAI Decisions**) utilizam a mesma `OPENROUTER_API_KEY`. O **Laya Padrão** e o **Laya Tuned** rodam 100% locais na sua máquina e **não necessitam de nenhuma chave de API**. O **CLM-8B** conecta-se a um endpoint local compatível (`clm-serve`/vLLM).
 
 ---
 
 ## ⚡ Como Executar os Testes
 
 ### Modo A: Regeneração Instantânea dos Relatórios e Dashboard (Recomendado)
-Todas as **4.000 predições brutas já estão versionadas e congeladas** no repositório em `results/raw/`. Você pode auditar e regerar todos os artefatos imediatamente, sem custos de API e sem baixar modelos:
+Todas as **5.000 predições brutas já estão versionadas e congeladas** no repositório em `results/raw/`. Você pode auditar e regerar todos os artefatos imediatamente, sem custos de API e sem baixar modelos:
 
 ```bash
 # 1. Regenera results/report.md e todos os gráficos PNG em results/charts/
@@ -96,14 +102,14 @@ Para validar a integridade do pipeline de processamento, cálculo de métricas e
 ```bash
 pytest
 ```
-*Executa 15 testes unitários e de integração cobrindo emparelhamento de dados, mocks de transporte HTTP para Jev e CLM, e bootstrap estatístico.*
+*Executa 16 testes unitários e de integração cobrindo emparelhamento de dados, mocks de transporte HTTP para Jev, OpenAI Decisions e CLM, e bootstrap estatístico.*
 
 ### Modo C: Smoke Test Rápido
 Para verificar se o ambiente local e as integrações com os modelos estão operacionais em segundos:
 ```bash
 python -m bench.cli smoke
 ```
-*Avalia 5 casos representativos (1 de cada tarefa) nos 4 modelos simultaneamente.*
+*Avalia 5 casos representativos (1 de cada tarefa) nos 5 modelos simultaneamente.*
 
 ---
 
@@ -127,7 +133,10 @@ python -m bench.cli run --model clm
 # Passo 5: Executar inferência do Jev via OpenRouter API (~2 minutos com 5 workers)
 python -m bench.cli run --model jev --concurrency 5
 
-# Passo 6: Gerar o relatório consolidado e o dashboard interativo
+# Passo 6: Executar inferência do OpenAI Decisions via OpenRouter API (~2 minutos com 5 workers)
+python -m bench.cli run --model openai --concurrency 5
+
+# Passo 7: Gerar o relatório consolidado e o dashboard interativo
 python -m bench.cli report
 python bench/generate_site.py
 open site/index.html
@@ -147,8 +156,8 @@ A CLI unificada pode ser acessada via módulo Python (`python -m bench.cli`) ou 
 | Comando | Descrição | Exemplo |
 |---|---|---|
 | `prepare` | Baixa os 5 datasets do Hugging Face e congela 200 casos de cada com seed fixa. | `python -m bench.cli prepare` |
-| `smoke` | Roda um teste rápido de sanidade com 5 casos nos 4 modelos. | `python -m bench.cli smoke` |
-| `run` | Executa a inferência completa de 1.000 casos para um modelo (`jev`, `laya`, `laya-tuned`, `clm` ou `all`). | `python -m bench.cli run --model clm` |
+| `smoke` | Roda um teste rápido de sanidade com 5 casos nos 5 modelos. | `python -m bench.cli smoke` |
+| `run` | Executa a inferência completa de 1.000 casos para um modelo (`jev`, `openai`, `laya`, `laya-tuned`, `clm` ou `all`). | `python -m bench.cli run --model openai` |
 | `report` | Calcula métricas, gera o `results/report.md` e produz os gráficos comparativos. | `python -m bench.cli report` |
 
 ---
@@ -173,7 +182,8 @@ JevTest/
 │   ├── tasks.py              # Definição e amostragem dos 5 datasets
 │   └── clients/              # Clientes de inferência tipados
 │       ├── base.py           # Interface comum DecisionClient e dataclass Prediction
-│       ├── jev.py            # Cliente OpenRouter Decisions API (tipado com retries)
+│       ├── jev.py            # Cliente OpenRouter Decisions API para Jev
+│       ├── openai_decisions.py # Cliente OpenRouter Decisions API para OpenAI (GPT-6 Luna)
 │       ├── clm.py            # Cliente CLM-8B NVIDIA/Stanford (System 1 contrastivo)
 │       └── laya_local.py     # Cliente local Laya (com suporte a head_max_len=512)
 ├── tests/                    # Suíte de testes automatizados
@@ -183,8 +193,9 @@ JevTest/
     ├── manifest.jsonl        # 1.000 casos congelados com seed=42 (mesmos prompts)
     ├── report.md             # Relatório técnico completo e análise arquitetural
     ├── datasets.md           # Análise motivacional e resultados por dataset
-    ├── raw/                  # Predições brutas versionadas (4.000 previsões auditadas)
+    ├── raw/                  # Predições brutas versionadas (5.000 previsões auditadas)
     │   ├── jev.jsonl         # 1.000 predições do Jev (100% de sucesso)
+    │   ├── openai.jsonl      # 1.000 predições do OpenAI Decisions (99.9% de sucesso, 1 recusa)
     │   ├── laya.jsonl        # 1.000 predições do Laya Padrão (100% de sucesso)
     │   ├── laya-tuned.jsonl  # 1.000 predições do Laya Tuned (100% de sucesso)
     │   └── clm.jsonl         # 1.000 predições do CLM-8B (100% de sucesso)
@@ -199,5 +210,6 @@ JevTest/
 ## ⚖️ Ressalvas Metodológicas
 
 1. **Amostragem Estatística:** A amostra é de N = 200 por dataset (1.000 casos no total). Com N = 200, a margem de erro (IC 95%) para acurácia é de aproximadamente ±7 p.p. Diferenças inferiores a esse intervalo (como no dataset Emotion, onde houve diferença de 0.5% a 2.0% entre os modelos) configuram empate técnico.
-2. **Comparabilidade de Latência:** A latência do Jev inclui o tempo total de trânsito pela internet (cliente ↔ OpenRouter ↔ TypeSafe), medida com 5 requisições concorrentes. A latência do Laya e do CLM-8B reflete inferência local (ou via socket local de GPU). No CLM-8B, a técnica de **Action Caching** mantém os embeddings dos critérios pré-alocados em memória de vídeo, tornando a inferência de alta cardinalidade extremamente rápida (~49 ms p50) sem saturação cross-attention.
+2. **Comparabilidade de Latência:** As latências de nuvem (Jev e OpenAI Decisions) incluem o trânsito completo pela internet (cliente ↔ OpenRouter ↔ Provedor), medidas com requisições concorrentes. A latência do Laya e do CLM-8B reflete inferência local (ou via socket local de GPU). No CLM-8B, o **Action Caching** mantém os embeddings dos critérios pré-alocados em memória de vídeo (~49 ms p50).
+3. **Guardrails e Recusas em APIs de Decisão:** Durante o benchmark do modelo OpenAI (`openai/gpt-6-luna-decisions`), o caso `banking77-0123` foi recusado pelo sistema de moderação e guardrails da OpenAI (HTTP 502 Refusal), resultando em taxa de sucesso de 99.9%. Por rigor metodológico, recusas formais em tarefas de benchmark determinístico são computadas como erro (`ok=False`).
 

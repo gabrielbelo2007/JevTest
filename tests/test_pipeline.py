@@ -15,6 +15,7 @@ import bench.tasks as tasks
 from bench.clients.base import Prediction
 from bench.clients.clm import CLMClient
 from bench.clients.jev import JevClient
+from bench.clients.openai_decisions import OpenAIDecisionsClient
 from bench.tasks import Case
 
 
@@ -166,6 +167,38 @@ def test_clm_choice_noul_score_e_erro_http():
     assert p.ok and p.pred == 3 and p.score_value == 2.8
 
     bad = _clm_with(lambda req: httpx.Response(500, text="internal server error"))
+    p = bad.predict(_case())
+    assert not p.ok and "HTTP 500" in p.error and p.pred is None
+
+
+# ---------- cliente OpenAI Decisions (HTTP simulado) ----------
+
+def _openai_with(handler):
+    c = OpenAIDecisionsClient(api_key="k")
+    c.client = httpx.Client(transport=httpx.MockTransport(handler))
+    return c
+
+
+def test_openai_choice_noul_score_e_erro_http():
+    def handler(req):
+        q = list(json.loads(req.content)["questions"].keys())[0]
+        return httpx.Response(200, json={"answers": {q: handler.answer}})
+
+    openai_cli = _openai_with(handler)
+
+    handler.answer = {"type": "choice", "choice": "b", "probabilities": {"a": 0.2, "b": 0.8}}
+    p = openai_cli.predict(_case(gold="b"))
+    assert p.ok and p.pred == "b" and p.probs["b"] == 0.8 and p.model == "openai"
+
+    handler.answer = {"type": "noul", "noul": 0.9}
+    p = openai_cli.predict(_case(qtype="noul", gold=True))
+    assert p.ok and p.pred is True and p.p_true == 0.9 and p.model == "openai"
+
+    handler.answer = {"type": "score", "score": 2.6}
+    p = openai_cli.predict(_case(qtype="score", gold=3, criteria=["0", "1", "2", "3", "4"]))
+    assert p.ok and p.pred == 3 and p.model == "openai"
+
+    bad = _openai_with(lambda req: httpx.Response(500, text="internal error"))
     p = bad.predict(_case())
     assert not p.ok and "HTTP 500" in p.error and p.pred is None
 

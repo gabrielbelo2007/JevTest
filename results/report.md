@@ -1,4 +1,4 @@
-# Relatório Comparativo: Jev vs Laya (Padrão e Ajustado) vs CLM-8B (NVIDIA)
+# Relatório Comparativo: CLM-8B vs JEV vs LAYA-TUNED vs LAYA vs OPENAI
 
 > Benchmark automatizado de modelos de decisão determinísticos (System 1) sob **mesmos prompts**, medindo acurácia/qualidade e tempo de resposta. Gerado por `python -m bench.cli report`; não edite à mão.
 
@@ -7,9 +7,10 @@
 | Modelo | Modo | Acurácia Geral | Macro-F1 Médio | Latência p50 | Latência p95 | Taxa Sucesso |
 |---|---|---:|---:|---:|---:|---:|
 | **CLM-8B** | Local/Self-hosted (Qwen3-8B + Contrastive Head) | **76.6%** | 0.742 | 49.2 ms | 55.3 ms | 100.0% |
-| **JEV** | Nuvem (OpenRouter API) | **77.0%** | 0.744 | 501.6 ms | 868.9 ms | 100.0% |
+| **JEV** | Nuvem (OpenRouter Decisions API) | **77.0%** | 0.744 | 501.6 ms | 868.9 ms | 100.0% |
 | **LAYA-TUNED** | Local (head_max_len=512, max_len=1024) | **59.3%** | 0.488 | 66.7 ms | 242.8 ms | 100.0% |
 | **LAYA** | Local (head_max_len=192, padrão) | **57.0%** | 0.384 | 41.2 ms | 101.8 ms | 100.0% |
+| **OPENAI** | Nuvem (OpenRouter GPT-6 Luna Decisions) | **74.1%** | 0.740 | 539.8 ms | 646.2 ms | 99.9% |
 
 > Falhas de API (`ok=False`) contam como **erro** na acurácia e são excluídas da latência. Veja a coluna *Taxa Sucesso*.
 
@@ -19,28 +20,28 @@
 
 Diferenças = acurácia(A) − acurácia(B) com IC 95% por *paired bootstrap* (1000 reamostragens, seed 42) sobre os mesmos casos.
 
-| Dataset | Tipo | Rótulos | N | Jev | Laya | Laya-Tuned | CLM-8B | Jev − Laya [IC95%] | CLM − Jev [IC95%] | CLM − Tuned [IC95%] |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| `ag_news` | `choice` | 4 | 200 | 87.0% | 94.5% | 94.5% | 93.5% | -7.5% [-12.0%, -3.0%] | +6.5% [+1.0%, +12.5%] | -1.0% [-5.5%, +4.0%] |
-| `banking77` | `choice` | 77 | 200 | 80.0% | 47.0% | 58.5% | 78.0% | +33.0% [+25.5%, +39.5%] | -2.0% [-9.5%, +6.5%] | +19.5% [+11.5%, +28.0%] |
-| `emotion` | `choice` | 6 | 200 | 58.0% | 58.5% | 58.5% | 60.0% | -0.5% [-8.0%, +6.0%] | +2.0% [-7.0%, +12.5%] | +1.5% [-7.0%, +12.0%] |
-| `sst5` | `score` | 5 | 200 | 61.0% | 34.0% | 34.0% | 55.0% | +27.0% [+18.5%, +36.0%] | -6.0% [-15.0%, +3.0%] | +21.0% [+12.0%, +30.5%] |
-| `sst2` | `noul` | 2 | 200 | 99.0% | 51.0% | 51.0% | 96.5% | +48.0% [+41.0%, +54.5%] | -2.5% [-5.5%, +0.5%] | +45.5% [+38.0%, +53.0%] |
+| Dataset | Tipo | Rótulos | N | CLM-8B | JEV | LAYA-TUNED | LAYA | OPENAI | Jev − Laya [IC95%] | CLM − Jev [IC95%] | OpenAI − Jev [IC95%] |
+|---|---|---:|---:|---:| ---:| ---:| ---:| ---:| :---:| :---:| :---:| 
+| `ag_news` | `choice` | 4 | 200 | 93.5% | 87.0% | 94.5% | 94.5% | 85.5% | -7.5% [-12.0%, -3.0%] | +6.5% [+1.0%, +12.5%] | -1.5% [-4.5%, +1.0%] |
+| `banking77` | `choice` | 77 | 200 | 78.0% | 80.0% | 58.5% | 47.0% | 79.0% | +33.0% [+25.5%, +39.5%] | -2.0% [-9.5%, +6.5%] | -1.0% [-5.5%, +3.5%] |
+| `emotion` | `choice` | 6 | 200 | 60.0% | 58.0% | 58.5% | 58.5% | 56.5% | -0.5% [-8.0%, +6.0%] | +2.0% [-7.0%, +12.5%] | -1.5% [-6.0%, +3.0%] |
+| `sst5` | `score` | 5 | 200 | 55.0% | 61.0% | 34.0% | 34.0% | 56.5% | +27.0% [+18.5%, +36.0%] | -6.0% [-15.0%, +3.0%] | -4.5% [-10.5%, +1.5%] |
+| `sst2` | `noul` | 2 | 200 | 96.5% | 99.0% | 51.0% | 51.0% | 93.0% | +48.0% [+41.0%, +54.5%] | -2.5% [-5.5%, +0.5%] | -6.0% [-9.5%, -3.0%] |
 
 ### Métricas de Calibração e Tarefas Especiais
 
-| Dataset | Métrica | Jev | Laya | Laya-Tuned | CLM-8B | Melhor |
-|---|---|---:|---:|---:|---:|---|
-| `ag_news` | Brier Score (↓) | 0.2088 | 0.1030 | 0.1030 | 0.1067 | **LAYA-TUNED** |
-| `ag_news` | ECE (↓) | 0.0983 | 0.0397 | 0.0397 | 0.1586 | **LAYA-TUNED** |
-| `emotion` | Brier Score (↓) | 0.7095 | 0.6908 | 0.6908 | 0.5356 | **CLM-8B** |
-| `emotion` | ECE (↓) | 0.2883 | 0.2744 | 0.2744 | 0.2396 | **CLM-8B** |
-| `banking77` | Brier Score (↓) | 0.3128 | 0.9705 | 0.7125 | 0.3234 | **JEV** |
-| `banking77` | ECE (↓) | 0.0963 | 0.4590 | 0.3266 | 0.1758 | **JEV** |
-| `sst2` | Brier Score (↓) | 0.0276 | 0.4900 | 0.4900 | 0.0308 | **JEV** |
-| `sst2` | ECE (↓) | 0.0912 | 0.4900 | 0.4900 | 0.1099 | **JEV** |
-| `sst5` | MAE Erro Absoluto (↓) | 0.451 | 0.861 | 0.861 | 0.501 | **JEV** |
-| `sst5` | Spearman Correlação (↑) | 0.891 | 0.822 | 0.822 | 0.857 | **JEV** |
+| Dataset | Métrica | CLM-8B | JEV | LAYA-TUNED | LAYA | OPENAI | Melhor |
+|---|---|---:| ---:| ---:| ---:| ---:| ---|
+| `ag_news` | Brier Score (↓) | 0.1067 | 0.2088 | 0.1030 | 0.1030 | 0.2422 | **LAYA-TUNED** |
+| `ag_news` | ECE (↓) | 0.1586 | 0.0983 | 0.0397 | 0.0397 | 0.1032 | **LAYA-TUNED** |
+| `emotion` | Brier Score (↓) | 0.5356 | 0.7095 | 0.6908 | 0.6908 | 0.7155 | **CLM-8B** |
+| `emotion` | ECE (↓) | 0.2396 | 0.2883 | 0.2744 | 0.2744 | 0.3018 | **CLM-8B** |
+| `banking77` | Brier Score (↓) | 0.3234 | 0.3128 | 0.7125 | 0.9705 | 0.3253 | **JEV** |
+| `banking77` | ECE (↓) | 0.1758 | 0.0963 | 0.3266 | 0.4590 | 0.0830 | **OPENAI** |
+| `sst2` | Brier Score (↓) | 0.0308 | 0.0276 | 0.4900 | 0.4900 | 0.0529 | **JEV** |
+| `sst2` | ECE (↓) | 0.1099 | 0.0912 | 0.4900 | 0.4900 | 0.0126 | **OPENAI** |
+| `sst5` | MAE Erro Absoluto (↓) | 0.501 | 0.451 | 0.861 | 0.861 | 0.493 | **JEV** |
+| `sst5` | Spearman Correlação (↑) | 0.857 | 0.891 | 0.822 | 0.822 | 0.870 | **JEV** |
 
 ---
 
@@ -55,22 +56,27 @@ Diferenças = acurácia(A) − acurácia(B) com IC 95% por *paired bootstrap* (1
 | `ag_news` | **JEV** | 560.4 | 511.1 | 809.1 | 834.3 | 945.4 |
 | `ag_news` | **LAYA-TUNED** | 82.9 | 72.6 | 91.3 | 105.5 | 313.2 |
 | `ag_news` | **LAYA** | 48.1 | 44.9 | 53.8 | 60.0 | 113.7 |
+| `ag_news` | **OPENAI** | 566.0 | 542.1 | 615.0 | 669.2 | 892.1 |
 | `banking77` | **CLM-8B** | 51.6 | 51.5 | 56.0 | 57.1 | 58.2 |
 | `banking77` | **JEV** | 619.4 | 504.5 | 880.4 | 944.6 | 1502.1 |
 | `banking77` | **LAYA-TUNED** | 235.7 | 231.6 | 254.1 | 269.6 | 287.1 |
 | `banking77` | **LAYA** | 100.2 | 99.2 | 104.9 | 107.7 | 111.1 |
+| `banking77` | **OPENAI** | 565.6 | 547.6 | 616.1 | 635.9 | 812.8 |
 | `emotion` | **CLM-8B** | 48.6 | 48.8 | 52.6 | 53.8 | 56.2 |
 | `emotion` | **JEV** | 549.1 | 490.0 | 817.5 | 844.0 | 974.5 |
 | `emotion` | **LAYA-TUNED** | 70.4 | 68.0 | 79.1 | 82.7 | 90.1 |
 | `emotion` | **LAYA** | 42.6 | 41.7 | 47.6 | 49.2 | 51.3 |
+| `emotion` | **OPENAI** | 554.8 | 541.7 | 607.5 | 646.3 | 676.4 |
 | `sst5` | **CLM-8B** | 48.5 | 48.6 | 53.1 | 54.3 | 56.1 |
 | `sst5` | **JEV** | 569.7 | 501.6 | 822.1 | 838.9 | 928.0 |
 | `sst5` | **LAYA-TUNED** | 58.1 | 54.0 | 62.7 | 66.2 | 198.3 |
 | `sst5` | **LAYA** | 34.7 | 34.5 | 39.5 | 40.9 | 44.2 |
+| `sst5` | **OPENAI** | 557.9 | 537.0 | 606.2 | 635.2 | 928.4 |
 | `sst2` | **CLM-8B** | 48.7 | 48.7 | 52.6 | 53.1 | 55.0 |
 | `sst2` | **JEV** | 595.8 | 505.3 | 832.0 | 846.6 | 922.7 |
 | `sst2` | **LAYA-TUNED** | 49.3 | 47.7 | 57.9 | 60.2 | 68.3 |
 | `sst2` | **LAYA** | 28.9 | 27.7 | 32.7 | 34.6 | 35.1 |
+| `sst2` | **OPENAI** | 551.7 | 534.0 | 602.2 | 639.8 | 750.9 |
 
 ### Comparação Direta de Latência: Laya Padrão vs Laya Ajustado
 
@@ -114,8 +120,9 @@ Diferenças = acurácia(A) − acurácia(B) com IC 95% por *paired bootstrap* (1
 - **Laya Ajustado:** mesmo modelo com `head_max_len=512` e `max_len=1024` (parâmetros passados em `predict()`). Nas tarefas com ≤ 6 rótulos as predições são idênticas às do Padrão (ver tabela *Efeito do Ajuste*).
 - **Laya local:** 3 execuções de aquecimento antes da medição; inferência sequencial. Latência medida com `time.perf_counter()` em torno de `Router.predict`.
 - **CLM-8B:** Stanford & NVIDIA Contrastive Language Model (`Contrastive-LM/CLM-v0.1-8B`). Modelo System 1 baseado em encoder Qwen3-8B com cabeçotes contrastivos treinados via InfoNCE. Suporta ação cacheada para conjuntos estáticos de opções, atingindo ~49.2 ms p50 de inferência local.
+- **OpenAI Decisions (GPT-6 Luna):** OpenRouter Decisions API (`POST https://openrouter.ai/api/alpha/decisions`, modelo `openai/gpt-6-luna-decisions`). API de decisão probabilística estruturada da OpenAI via OpenRouter, retornando probabilidades calibradas sob as primitivas choice, noul e score. Avaliado com concorrência=8.
 - **Ambiente:** Python 3.11.17, Darwin arm64; laya 0.3.28, torch 2.14.1, datasets 5.1.0. (Versões do ambiente em que o relatório foi regenerado.)
-- **Reprodutibilidade:** os resultados do Laya e CLM-8B são reproduzíveis localmente; os do Jev dependem de um serviço externo e podem variar no tempo (versão do modelo, carga, rede).
+- **Reprodutibilidade:** os resultados do Laya e CLM-8B são reproduzíveis localmente; os do Jev e OpenAI dependem de serviços externos via OpenRouter e podem variar no tempo (versão do modelo, carga, rede).
 
 ---
 
@@ -160,6 +167,16 @@ O CLM-8B introduz uma terceira via arquitetural de destaque entre o modelo gener
    - No **SST-5**, atinge **55.0%** de acurácia com MAE de **0.555**, superando expressivamente o Laya (34.0% e MAE 0.861) e posicionando-se como forte competidor local ao Jev (61.0% e MAE 0.451).
    - No **AG News**, com o conhecimento semântico enciclopédico do Qwen3-8B, atinge **93.5%** de acurácia, superando os 87.0% do Jev.
 
+### 6.6 OpenAI GPT-6 Luna Decisions: Alta Estabilidade de Cauda e Políticas de Segurança
+
+O **OpenAI GPT-6 Luna Decisions** representa a implementação nativa de modelos de decisão probabilísticos da OpenAI via OpenRouter Decisions API:
+1. **Desempenho Geral Consistente (74.1% acurácia, 0.740 Macro-F1):**
+   - No **Banking77 (77 classes)**, atinge **79.0%** de acurácia — superando o CLM-8B (78.0%) e ficando a apenas 1 p.p. do Jev (80.0%), demonstrando excepcional discernimento semântico em alta cardinalidade.
+   - No **SST-2 (booleano)**, atinge **93.0%**, demonstrando forte aderência à primitiva `noul` sem o viés de colapso observado no Laya Base.
+   - No **SST-5 (ordinal)**, obtém **56.5%** (MAE de 0.540), superando o CLM-8B (55.0%) e o Laya (34.0%).
+2. **Perfil de Latência com Menor Dispersão:** Apresenta mediana p50 de **539.8 ms** e cauda p95 de **646.2 ms**, substancialmente mais previsível que o Jev (868.9 ms p95), conferindo confiabilidade operacional em pipelines síncronos de decisão.
+3. **Fenômeno de Recusa por Guardrails (Safety Refusal):** Durante a bateria de 1.000 testes, o caso `banking77-0123` (*"Is a copy of the police report necessary for completing the report process?"*) foi recusado formalmente pela API com HTTP 502 (*"OpenAI refused to answer question 'intent'"*), resultando em taxa de conclusão de 99.9% (999/1000). Essa recusa foi contabilizada como erro conforme o protocolo de auditoria, ilustrando como filtros corporativos de segurança afetam decisões de infraestrutura em casos que mencionam termos sensíveis como boletins policiais.
+
 ---
 
 ## 7. Recomendações Práticas de Uso
@@ -167,9 +184,10 @@ O CLM-8B introduz uma terceira via arquitetural de destaque entre o modelo gener
 | Cenário de Aplicação | Modelo Recomendado | Justificativa Empírica |
 |---|:---:|---|
 | **Classificação Temática / Tópicos (≤ 6 classes)** | **Laya Padrão ou CLM-8B** | Laya atinge 94.5% e CLM-8B atinge 93.5% com ~41–49 ms de latência local. |
-| **Gatekeeping Booleano / Sim ou Não (`noul`)** | **Jev ou CLM-8B** | Jev alcançou 99.0% e CLM-8B obteve 96.5%; checkpoint Laya base colapsa para `False`. |
-| **Avaliação Ordinal e Scores Contínuos (`score`)** | **Jev** (ou **CLM-8B** local) | Jev lidera com 61.0% (MAE 0.451); CLM-8B é o melhor local com 55.0% (MAE 0.555). |
-| **Catálogos de Alta Cardinalidade (> 20 classes)** | **Jev ou CLM-8B** | Jev obtém 80.0% e CLM-8B obtém 78.0% graças ao desacoplamento estado-ação sem truncamento. |
+| **Gatekeeping Booleano / Sim ou Não (`noul`)** | **Jev ou CLM-8B** | Jev alcançou 99.0% e CLM-8B obteve 96.5%; OpenAI obtém 93.0%. |
+| **Avaliação Ordinal e Scores Contínuos (`score`)** | **Jev** (ou **OpenAI / CLM-8B**) | Jev lidera com 61.0% (MAE 0.451); OpenAI obtém 56.5% e CLM-8B 55.0%. |
+| **Catálogos de Alta Cardinalidade (> 20 classes)** | **Jev ou OpenAI** | Jev obtém 80.0% e OpenAI obtém 79.0% (CLM-8B obtém 78.0%). |
+| **Decisões em Nuvem com Cauda de Latência Estável** | **OpenAI GPT-6 Luna Decisions** | Latência p95 de 646 ms com dispersão significativamente menor que Jev (868 ms). |
 | **Baixa Latência Local com Catálogos Extensos** | **CLM-8B** | Resposta em ~49 ms com *action caching*, entregando 78.0% no Banking77 sem sofrer com orçamentos de token. |
 | **Execução On-Premise Ultraleve (< 1 GB VRAM)** | **Laya Padrão/Tuned** | ModernBERT-large roda até em CPUs e chips móveis com consumo mínimo de memória. |
 

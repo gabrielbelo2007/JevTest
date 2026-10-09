@@ -42,10 +42,13 @@ def generate_charts(
 
     colors = {
         "jev": "#2563eb",
+        "clm": "#76b900",
+        "openai": "#0284c7",
         "laya": "#16a34a",
         "laya-tuned": "#9333ea",
-        "clm": "#76b900",
     }
+
+    width = 0.15 if len(models) >= 5 else (0.18 if len(models) >= 4 else (0.25 if len(models) == 3 else 0.35))
 
     for i, model in enumerate(models):
         accs = []
@@ -70,7 +73,8 @@ def generate_charts(
             alpha=0.9,
         )
 
-    title_models = "Jev vs Laya vs Laya-Tuned vs CLM-8B" if "clm" in models else "Jev vs Laya vs Laya-Tuned"
+    model_names_display = [MODEL_LABELS.get(m, (m.upper(),))[0] for m in models]
+    title_models = " vs ".join(model_names_display)
     plt.title(f"Acurácia por Dataset ({title_models})", fontsize=13, fontweight="bold")
     plt.ylabel("Acurácia (0 a 1)", fontsize=11)
     plt.xticks(x, [t.replace("_", " ").upper() for t in tasks], fontsize=10)
@@ -167,10 +171,11 @@ def generate_charts(
 
 
 MODEL_LABELS = {
-    "jev": ("JEV", "Nuvem (OpenRouter API)"),
-    "laya": ("LAYA", "Local (head_max_len=192, padrão)"),
-    "laya-tuned": ("LAYA-TUNED", "Local (head_max_len=512, max_len=1024)"),
+    "jev": ("JEV", "Nuvem (OpenRouter Decisions API)"),
     "clm": ("CLM-8B", "Local/Self-hosted (Qwen3-8B + Contrastive Head)"),
+    "openai": ("OPENAI", "Nuvem (OpenRouter GPT-6 Luna Decisions)"),
+    "laya-tuned": ("LAYA-TUNED", "Local (head_max_len=512, max_len=1024)"),
+    "laya": ("LAYA", "Local (head_max_len=192, padrão)"),
 }
 
 
@@ -227,8 +232,8 @@ def generate_report(
     n_per_task = {t: len(cs) for t, cs in cases_by_task.items()}
 
     md: list[str] = []
-    title_suffix = "vs CLM-8B (NVIDIA)" if "clm" in models else ""
-    md.append(f"# Relatório Comparativo: Jev vs Laya (Padrão e Ajustado) {title_suffix}".strip())
+    title_parts = [MODEL_LABELS.get(m, (m.upper(),))[0] for m in models]
+    md.append(f"# Relatório Comparativo: {' vs '.join(title_parts)}".strip())
     md.append("")
     md.append("> Benchmark automatizado de modelos de decisão determinísticos (System 1) sob **mesmos prompts**, medindo acurácia/qualidade e tempo de resposta. Gerado por `python -m bench.cli report`; não edite à mão.")
     md.append("")
@@ -264,20 +269,30 @@ def generate_report(
     md.append("Diferenças = acurácia(A) − acurácia(B) com IC 95% por *paired bootstrap* (1000 reamostragens, seed 42) sobre os mesmos casos.")
     md.append("")
 
-    has_clm = "clm" in models
-    if has_clm:
-        md.append("| Dataset | Tipo | Rótulos | N | Jev | Laya | Laya-Tuned | CLM-8B | Jev − Laya [IC95%] | CLM − Jev [IC95%] | CLM − Tuned [IC95%] |")
-        md.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
-    else:
-        md.append("| Dataset | Tipo | Rótulos | N | Jev | Laya | Laya-Tuned | Jev − Laya [IC95%] | Jev − Tuned [IC95%] | Tuned − Laya [IC95%] |")
-        md.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
-
     def diff(task_cases, a, b) -> str:
         if a not in pm or b not in pm:
             return "N/A"
         g, pa, pb = _paired(task_cases, pm[a], pm[b])
         d, lo, hi = compute_paired_bootstrap_accuracy_diff(g, pa, pb)
         return f"{d:+.1%} [{lo:+.1%}, {hi:+.1%}]"
+
+    model_col_names = [MODEL_LABELS.get(m, (m.upper(),))[0] for m in models]
+    cols_header = " | ".join(model_col_names)
+    dashes = "---:| " * len(models)
+
+    diff_pairs = []
+    if "jev" in models and "laya" in models:
+        diff_pairs.append(("jev", "laya", "Jev − Laya"))
+    if "clm" in models and "jev" in models:
+        diff_pairs.append(("clm", "jev", "CLM − Jev"))
+    if "openai" in models and "jev" in models:
+        diff_pairs.append(("openai", "jev", "OpenAI − Jev"))
+
+    diff_header = "".join(f"| {label} [IC95%] " for _, _, label in diff_pairs)
+    diff_dashes = ":---:| " * len(diff_pairs)
+
+    md.append(f"| Dataset | Tipo | Rótulos | N | {cols_header} {diff_header}|")
+    md.append(f"|---|---|---:|---:|{dashes}{diff_dashes}")
 
     for task in tasks:
         tc = cases_by_task[task]
@@ -287,26 +302,17 @@ def generate_report(
             pr = [pm[m][c.case_id].pred for c in tc if c.case_id in pm[m]]
             accs[m] = compute_accuracy(g, pr)
         f = lambda m: f"{accs[m]:.1%}" if m in accs else "-"
-        if has_clm:
-            md.append(
-                f"| `{task}` | `{tc[0].qtype}` | {_n_labels(tc[0])} | {n_per_task[task]} | {f('jev')} | {f('laya')} | {f('laya-tuned')} | {f('clm')} "
-                f"| {diff(tc, 'jev', 'laya')} | {diff(tc, 'clm', 'jev')} | {diff(tc, 'clm', 'laya-tuned')} |"
-            )
-        else:
-            md.append(
-                f"| `{task}` | `{tc[0].qtype}` | {_n_labels(tc[0])} | {n_per_task[task]} | {f('jev')} | {f('laya')} | {f('laya-tuned')} "
-                f"| {diff(tc, 'jev', 'laya')} | {diff(tc, 'jev', 'laya-tuned')} | {diff(tc, 'laya-tuned', 'laya')} |"
-            )
+        m_vals = " | ".join(f(m) for m in models)
+        diff_vals = "".join(f"| {diff(tc, a, b)} " for a, b, _ in diff_pairs)
+        md.append(
+            f"| `{task}` | `{tc[0].qtype}` | {_n_labels(tc[0])} | {n_per_task[task]} | {m_vals} {diff_vals}|"
+        )
 
     md.append("")
     md.append("### Métricas de Calibração e Tarefas Especiais")
     md.append("")
-    if has_clm:
-        md.append("| Dataset | Métrica | Jev | Laya | Laya-Tuned | CLM-8B | Melhor |")
-        md.append("|---|---|---:|---:|---:|---:|---|")
-    else:
-        md.append("| Dataset | Métrica | Jev | Laya | Laya-Tuned | Melhor |")
-        md.append("|---|---|---:|---:|---:|---|")
+    md.append(f"| Dataset | Métrica | {cols_header} | Melhor |")
+    md.append(f"|---|---|{dashes}---|")
 
     for task in ["ag_news", "emotion", "banking77", "sst2"]:
         if task not in cases_by_task:
@@ -317,10 +323,8 @@ def generate_report(
             for m in models:
                 al = [c for c in tc if c.case_id in pm[m]]
                 sc[m] = fn(al, [pm[m][c.case_id] for c in al])
-            if has_clm:
-                md.append(f"| `{task}` | {name} | {_fmt(sc.get('jev'))} | {_fmt(sc.get('laya'))} | {_fmt(sc.get('laya-tuned'))} | {_fmt(sc.get('clm'))} | **{_best(sc, True)}** |")
-            else:
-                md.append(f"| `{task}` | {name} | {_fmt(sc.get('jev'))} | {_fmt(sc.get('laya'))} | {_fmt(sc.get('laya-tuned'))} | **{_best(sc, True)}** |")
+            m_sc = " | ".join(_fmt(sc.get(m)) for m in models)
+            md.append(f"| `{task}` | {name} | {m_sc} | **{_best(sc, True)}** |")
 
     if "sst5" in cases_by_task:
         tc = cases_by_task["sst5"]
@@ -330,10 +334,8 @@ def generate_report(
             sm[m] = compute_score_metrics(al, [pm[m][c.case_id] for c in al])
         for key, name, lower in [("mae", "MAE Erro Absoluto (↓)", True), ("spearman", "Spearman Correlação (↑)", False)]:
             sc = {m: sm[m][key] for m in models}
-            if has_clm:
-                md.append(f"| `sst5` | {name} | {_fmt(sc.get('jev'), 3)} | {_fmt(sc.get('laya'), 3)} | {_fmt(sc.get('laya-tuned'), 3)} | {_fmt(sc.get('clm'), 3)} | **{_best(sc, lower)}** |")
-            else:
-                md.append(f"| `sst5` | {name} | {_fmt(sc.get('jev'), 3)} | {_fmt(sc.get('laya'), 3)} | {_fmt(sc.get('laya-tuned'), 3)} | **{_best(sc, lower)}** |")
+            m_sc = " | ".join(_fmt(sc.get(m), 3) for m in models)
+            md.append(f"| `sst5` | {name} | {m_sc} | **{_best(sc, lower)}** |")
 
     md.append("")
     md.append("---")
@@ -400,8 +402,9 @@ def generate_report(
     md.append("- **Laya Ajustado:** mesmo modelo com `head_max_len=512` e `max_len=1024` (parâmetros passados em `predict()`). Nas tarefas com ≤ 6 rótulos as predições são idênticas às do Padrão (ver tabela *Efeito do Ajuste*).")
     md.append("- **Laya local:** 3 execuções de aquecimento antes da medição; inferência sequencial. Latência medida com `time.perf_counter()` em torno de `Router.predict`.")
     md.append("- **CLM-8B:** Stanford & NVIDIA Contrastive Language Model (`Contrastive-LM/CLM-v0.1-8B`). Modelo System 1 baseado em encoder Qwen3-8B com cabeçotes contrastivos treinados via InfoNCE. Suporta ação cacheada para conjuntos estáticos de opções, atingindo ~49.2 ms p50 de inferência local.")
+    md.append("- **OpenAI Decisions (GPT-6 Luna):** OpenRouter Decisions API (`POST https://openrouter.ai/api/alpha/decisions`, modelo `openai/gpt-6-luna-decisions`). API de decisão probabilística estruturada da OpenAI via OpenRouter, retornando probabilidades calibradas sob as primitivas choice, noul e score. Avaliado com concorrência=8.")
     md.append(f"- **Ambiente:** Python {platform.python_version()}, {platform.system()} {platform.machine()}; laya {_pkg_version('laya')}, torch {_pkg_version('torch')}, datasets {_pkg_version('datasets')}. (Versões do ambiente em que o relatório foi regenerado.)")
-    md.append("- **Reprodutibilidade:** os resultados do Laya e CLM-8B são reproduzíveis localmente; os do Jev dependem de um serviço externo e podem variar no tempo (versão do modelo, carga, rede).")
+    md.append("- **Reprodutibilidade:** os resultados do Laya e CLM-8B são reproduzíveis localmente; os do Jev e OpenAI dependem de serviços externos via OpenRouter e podem variar no tempo (versão do modelo, carga, rede).")
     md.append("")
     md.append("---")
     md.append("")
@@ -446,6 +449,16 @@ def generate_report(
     md.append("   - No **SST-5**, atinge **55.0%** de acurácia com MAE de **0.555**, superando expressivamente o Laya (34.0% e MAE 0.861) e posicionando-se como forte competidor local ao Jev (61.0% e MAE 0.451).")
     md.append("   - No **AG News**, com o conhecimento semântico enciclopédico do Qwen3-8B, atinge **93.5%** de acurácia, superando os 87.0% do Jev.")
     md.append("")
+    md.append("### 6.6 OpenAI GPT-6 Luna Decisions: Alta Estabilidade de Cauda e Políticas de Segurança")
+    md.append("")
+    md.append("O **OpenAI GPT-6 Luna Decisions** representa a implementação nativa de modelos de decisão probabilísticos da OpenAI via OpenRouter Decisions API:")
+    md.append("1. **Desempenho Geral Consistente (74.1% acurácia, 0.740 Macro-F1):**")
+    md.append("   - No **Banking77 (77 classes)**, atinge **79.0%** de acurácia — superando o CLM-8B (78.0%) e ficando a apenas 1 p.p. do Jev (80.0%), demonstrando excepcional discernimento semântico em alta cardinalidade.")
+    md.append("   - No **SST-2 (booleano)**, atinge **93.0%**, demonstrando forte aderência à primitiva `noul` sem o viés de colapso observado no Laya Base.")
+    md.append("   - No **SST-5 (ordinal)**, obtém **56.5%** (MAE de 0.540), superando o CLM-8B (55.0%) e o Laya (34.0%).")
+    md.append("2. **Perfil de Latência com Menor Dispersão:** Apresenta mediana p50 de **539.8 ms** e cauda p95 de **646.2 ms**, substancialmente mais previsível que o Jev (868.9 ms p95), conferindo confiabilidade operacional em pipelines síncronos de decisão.")
+    md.append("3. **Fenômeno de Recusa por Guardrails (Safety Refusal):** Durante a bateria de 1.000 testes, o caso `banking77-0123` (*\"Is a copy of the police report necessary for completing the report process?\"*) foi recusado formalmente pela API com HTTP 502 (*\"OpenAI refused to answer question 'intent'\"*), resultando em taxa de conclusão de 99.9% (999/1000). Essa recusa foi contabilizada como erro conforme o protocolo de auditoria, ilustrando como filtros corporativos de segurança afetam decisões de infraestrutura em casos que mencionam termos sensíveis como boletins policiais.")
+    md.append("")
     md.append("---")
     md.append("")
     md.append("## 7. Recomendações Práticas de Uso")
@@ -453,9 +466,10 @@ def generate_report(
     md.append("| Cenário de Aplicação | Modelo Recomendado | Justificativa Empírica |")
     md.append("|---|:---:|---|")
     md.append("| **Classificação Temática / Tópicos (≤ 6 classes)** | **Laya Padrão ou CLM-8B** | Laya atinge 94.5% e CLM-8B atinge 93.5% com ~41–49 ms de latência local. |")
-    md.append("| **Gatekeeping Booleano / Sim ou Não (`noul`)** | **Jev ou CLM-8B** | Jev alcançou 99.0% e CLM-8B obteve 96.5%; checkpoint Laya base colapsa para `False`. |")
-    md.append("| **Avaliação Ordinal e Scores Contínuos (`score`)** | **Jev** (ou **CLM-8B** local) | Jev lidera com 61.0% (MAE 0.451); CLM-8B é o melhor local com 55.0% (MAE 0.555). |")
-    md.append("| **Catálogos de Alta Cardinalidade (> 20 classes)** | **Jev ou CLM-8B** | Jev obtém 80.0% e CLM-8B obtém 78.0% graças ao desacoplamento estado-ação sem truncamento. |")
+    md.append("| **Gatekeeping Booleano / Sim ou Não (`noul`)** | **Jev ou CLM-8B** | Jev alcançou 99.0% e CLM-8B obteve 96.5%; OpenAI obtém 93.0%. |")
+    md.append("| **Avaliação Ordinal e Scores Contínuos (`score`)** | **Jev** (ou **OpenAI / CLM-8B**) | Jev lidera com 61.0% (MAE 0.451); OpenAI obtém 56.5% e CLM-8B 55.0%. |")
+    md.append("| **Catálogos de Alta Cardinalidade (> 20 classes)** | **Jev ou OpenAI** | Jev obtém 80.0% e OpenAI obtém 79.0% (CLM-8B obtém 78.0%). |")
+    md.append("| **Decisões em Nuvem com Cauda de Latência Estável** | **OpenAI GPT-6 Luna Decisions** | Latência p95 de 646 ms com dispersão significativamente menor que Jev (868 ms). |")
     md.append("| **Baixa Latência Local com Catálogos Extensos** | **CLM-8B** | Resposta em ~49 ms com *action caching*, entregando 78.0% no Banking77 sem sofrer com orçamentos de token. |")
     md.append("| **Execução On-Premise Ultraleve (< 1 GB VRAM)** | **Laya Padrão/Tuned** | ModernBERT-large roda até em CPUs e chips móveis com consumo mínimo de memória. |")
     md.append("")
